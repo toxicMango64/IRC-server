@@ -1,63 +1,174 @@
-# Name of the output executable
-NAME = test
+# **************************************************************************** #
+#  Makefile builtin approach
+# **************************************************************************** #
+UNAME	=	$(shell uname -s)
 
-# C++ Compiler
-CXX = g++
+# **************************************************************************** #
+#  Project based configuration
+# **************************************************************************** #
+NAME	=	ircserv
+RM		=	rm -fr
+INC		:=	./inc/
+CFLAGS	+=	-Wall -Wextra -Werror -I${INC} #-g3 -fsanitize=address
+SANITIZE	:=	-fsanitize=address
 
-# Compiler flags
-CFLAGS = -Wall -Wextra -Werror -std=c++98
+OBS		+=	$(NAME).dSYM \
+			.DS_Store \
+			.vscode
+
+# **************************************************************************** #
+#  SYSTEM SPECIFIC SETTINGS
+# **************************************************************************** #
+ifeq ($(UNAME), Darwin) # mac
+  CC	:= g++
+  NUMPROC	:=  $(shell sysctl -n hw.ncpu)
+  CPPFLAGS	+=  
+else ifeq ($(UNAME), Linux) # linux
+  CC	:=	clang-19
+  NUMPROC	:=  $(shell grep -c ^processor /proc/cpuinfo)
+  CPPFLAGS	+=  
+else # or others
+	@echo "unsupported OS"
+	@exit (1);
+endif
+
+# --------------------------------------------------------------------------- #"
 
 # Source files
-SRCS = test.cpp  # Add your source files here
+SRCDIR		:=	./src/
 
-# Default rule
-all: $(NAME)
+# SRC	:=	$(SRCDIR)main.cpp
+SRC	:=	$(SRCDIR)test.cpp
 
-# Rule to build the target
-$(NAME): $(SRCS)
-	@$(CXX) $(CFLAGS) $(SRCS) -o $(NAME)
+# Object files
+ODIR	:=	obj
+OBJ		:=	$(SRC:%.cpp=$(ODIR)/%.o)
 
-# Rule to run the program
-testing: $(NAME)
+SANITIZED_FLAG	=	.sanitized
+
+PHONY	+= all clean info createSANITIZED removeSANITIZED
+mode	?=
+ifeq ($(mode), debug)
+  CFLAGS	+=	-g3 $(SANITIZE)
+  all: createSANITIZED clean build_info $(NAME) info ## builds the project
+
+else
+  ifeq ( -f , $(SANITIZED_FLAG))
+    all: removeSANITIZED clean $(NAME) ircserv ## builds the project
+  
+  else
+    all: $(NAME) ircserv ## builds the project
+
+  endif
+endif
+
+createSANITIZED:
+	@touch $(SANITIZED_FLAG)
+
+removeSANITIZED:
+	@$(RM) $(SANITIZED_FLAG)
+
+# non-phony targets
+$(NAME): $(OBJ)
+	@$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(OBJ) -o $(NAME)
+
+# Define a pattern rule that compiles every .c file into a .o file
+# Ex 1: .o files depend on .c files. Though we don't actually make the .o file.
+PHONY	+= build_info
+$(ODIR)/%.o : %.c | build_info
+	@mkdir -p $(dir $@)
+	@printf "${L_BLUE}[prereq]: ${L_GREEN}%-30s ${L_BLUE}[target]: ${L_GREEN}%s${RESET}\n" "$<" "$@"
+	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+
+build_info:
+	@echo "${L_CYAN}[compiler info]: ${L_MAGENTA}$(CC) -c $(CFLAGS) $(CPPFLAGS)${RESET}"
+
+PHONY	+= clean
+clean: ## cleans all the obj files
+	@$(RM) $(OBJ)
+
+PHONY	+= fclean
+fclean: clean removeSANITIZED ## uses the rule clean and removes the obsolete files
+	@$(RM) $(NAME) $(ODIR) $(DEBUGODIR) $(OBS)
+#	@$(MAKE) fclean -C $(LIBC_DIR)
+
+PHONY	+= re
+re: fclean all ## does fclean and all
+
+test: $(NAME) ## Rule to run the program
 	@echo "Running the program..."
 	@./$(NAME)
 
-# Clean rule to remove the executable
-clean:
-	rm -f $(NAME)
+PHONY	+=	ircserver
+SHIFT	=	$(eval O=$(shell echo $$((($(O)%15)+1))))
 
-# Fclean rule to remove all generated files
-fclean: clean
+ircserver:
+	@echo "$(C)$(O)$(L)+----------------------------------------+$(RESET)"
+	@echo "$(C)$(O)$(L)|  _                                     |";
+	$(SHIFT)
+	@echo "$(C)$(O)$(L)| (_) _ __  ___  ___   ___  _ __ __   __ |";
+	@echo "$(C)$(O)$(L)| | || '__|/ __|/ __| / _ \| '__|\ \ / / |";
+	$(SHIFT)
+	@echo "$(C)$(O)$(L)| | || |  | (__ \__ \|  __/| |    \ V /  |";
+	@echo "$(C)$(O)$(L)| |_||_|   \___||___/ \___||_|     \_/   |";
+	@echo "$(C)$(O)$(L)+----------------------------------------+$(RESET)"
 
-# Rebuild rule
-re: fclean all
+PHONY	+= info
+info: ## prints project based info
+	@echo "${L_CYAN}# -------------------------------------------------------------------------------- #$(RESET)"
+	@{ [ -n "${NAME}" ] && echo "${L_GREEN}NAME${RESET}		:	${L_MAGENTA}${NAME}${RESET}"; } || true
+	@{ [ -n "${UNAME}" ] && echo "${L_GREEN}UNAME${RESET}		:	${L_MAGENTA}${UNAME}${RESET}"; } || true
+	@{ [ -n "${NUMPROC}" ] && echo "${L_GREEN}NUMPROC${RESET}		:	${L_MAGENTA}${NUMPROC}${RESET}"; } || true
+	@{ [ -n "${CC}" ] && echo "${L_GREEN}CC${RESET}		:	${L_MAGENTA}${CC}${RESET}"; } || true
+	@{ [ -n "${CFLAGS}" ] && echo "${L_GREEN}CFLAGS${RESET}		:	${L_MAGENTA}${CFLAGS}${RESET}"; } || true
+	@{ [ -n "${LDFLAGS}" ] && echo "${L_GREEN}LDFLAGS${RESET}		:	${L_MAGENTA}${LDFLAGS}${RESET}"; } || true
+	@{ [ -n "${CPPFLAGS}" ] && echo "${L_GREEN}CPPFLAGS${RESET}	:	${L_MAGENTA}${CPPFLAGS}${RESET}"; } || true
+	@{ [ -n "${MAKEFLAGS}" ] && echo "${L_GREEN}MAKEFLAGS${RESET}	:	${L_MAGENTA}${MAKEFLAGS}${RESET}"; } || true
+	@{ [ -n "${mode}" ] && echo "${L_GREEN}BUILD MODE${RESET}	:	${L_MAGENTA}${mode}${RESET}"; } || true
+	@{ [ -n "${SRC}" ] && echo "${L_GREEN}SRC${RESET}		:\n	${L_BLUE}${SRC}${RESET}"; } || true
+	@echo "${L_CYAN}# -------------------------------------------------------------------------------- #$(RESET)"
 
-.PHONY: all clean fclean re test
+PHONY	+= help
+help: ## prints a list of the possible commands
+	@echo "${L_CYAN}# ---------------------------------------------------------------- #$(RESET)"
+	@printf "${L_MAGENTA}%-15s ${RESET}${L_BLUE}make [option] [target] ...${RESET}\n\n" "Usage:"
+	@printf "${L_MAGENTA}Option:${RESET}\n"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; \
+	{printf "${L_GREEN}%-15s ${L_BLUE}%s${RESET}\n", $$1, $$2}'
+	@printf "%-35s ${L_BLUE}This MAKE has Super Cow Powers.${RESET}\n"
+	@echo "${L_CYAN}# ---------------------------------------------------------------- #$(RESET)"
 
-# NAME = test
-# CXX = g++
+.DEFAULT:
+	@echo "${L_CYAN}# ---------------------------------------------------------------- #$(RESET)"
+	@echo "${L_RED}[Error]${RESET}: ${L_BLUE}\tUnknown target '${L_RED}$@${L_BLUE}'.${RESET}"
+	@${MAKE} -s help
 
-# # Compiler flags
-# CFLAGS = -Wall -Wextra -Werror -std=c++98
+# Declare the contents of the PHONY variable as phony.  We keep that
+# information in a variable so we can use it in if_changed and friends.
+.PHONY: $(PHONY)
 
-# # Source files
-# SRCS = test.cpp
-
-# all: $(NAME)
-
-# # Rule to build the target
-# $(NAME): $(SRCS)
-# 	$(CXX) $(CFLAGS) $(SRCS) -o $(NAME)
-
-# # Rule to run the program
-# test: $(NAME)
-# 	./$(NAME)  # Run the compiled program
-
-# clean:
-# 	rm -f $(NAME)
-
-# fclean: clean
-
-# re: fclean all
-
-# .PHONY: all clean fclean re test
+# **************************************************************************** #
+# Color Defination
+# **************************************************************************** #
+GB			:=	\033[42m
+RESET		:=	\033[0m
+RED			:=	\033[0;31m
+WHITE		:=	\033[0;97m
+BLUE		:=	\033[0;34m
+GRAY		:=	\033[0;90m
+CYAN		:=	\033[0;36m
+BLACK		:=	\033[0;30m
+GREEN		:=	\033[0;32m
+YELLOW		:=	\033[0;33m
+MAGENTA		:=	\033[0;35m
+BLUE		:=	\033[0;36m
+L_RED		:=	\033[0;91m
+L_GRAY		:=	\033[0;37m
+L_BLUE		:=	\033[0;94m
+L_CYAN		:=	\033[0;96m
+L_GREEN		:=	\033[0;92m
+L_YELLOW	:=	\033[0;93m
+L_MAGENTA	:=	\033[0;95m
+C			:=	\033[38;5;
+O			:=	72
+L			:=	m

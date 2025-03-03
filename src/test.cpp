@@ -4,7 +4,7 @@ using std::cout;
 
 int main() {
 
-	std::cout << "Program was successfully\n";
+	std::cout << "Program executed successfully\n";
 
 	return (0);
 }
