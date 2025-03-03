@@ -9,7 +9,7 @@ UNAME	=	$(shell uname -s)
 NAME	=	ircserv
 RM		=	rm -fr
 INC		:=	./inc/
-CFLAGS	+=	-Wall -Wextra -Werror -I${INC} #-g3 -fsanitize=address
+CFLAGS	+=	-Wall -Wextra -Werror -I${INC}
 SANITIZE	:=	-fsanitize=address
 
 OBS		+=	$(NAME).dSYM \
@@ -48,34 +48,39 @@ SANITIZED_FLAG	=	.sanitized
 
 PHONY	+= all clean info createSANITIZED removeSANITIZED
 mode	?=
-ifeq ($(mode), debug)
+
+# Check if the SANITIZED_FLAG file exists
+SANITIZED_EXISTS := $(shell [ -f $(SANITIZED_FLAG) ] && echo 1)
+
+ifeq ($(mode), debug) ## checks for debug mode
   CFLAGS	+=	-g3 $(SANITIZE)
-  all: createSANITIZED clean build_info $(NAME) info ## builds the project
-
-else
-  ifeq ( -f , $(SANITIZED_FLAG))
-    all: removeSANITIZED clean $(NAME) ircserv ## builds the project
-  
+  ifeq ($(SANITIZED_EXISTS), 1)
+  	all: build_info $(NAME) info
   else
-    all: $(NAME) ircserv ## builds the project
-
+  	all: createSANITIZED clean build_info $(NAME) info
+	@echo "Creating sanitized flag: ${SANITIZED_FLAG}"
+  endif
+else
+  ifeq ($(SANITIZED_EXISTS), 1)
+    all: removeSANITIZED clean $(NAME) ircserv
+  else
+    all: $(NAME) ircserv
   endif
 endif
 
 createSANITIZED:
-	@touch $(SANITIZED_FLAG)
+	touch $(SANITIZED_FLAG)
 
 removeSANITIZED:
-	@$(RM) $(SANITIZED_FLAG)
+	$(RM) $(SANITIZED_FLAG)
 
 # non-phony targets
 $(NAME): $(OBJ)
 	@$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(OBJ) -o $(NAME)
 
-# Define a pattern rule that compiles every .c file into a .o file
-# Ex 1: .o files depend on .c files. Though we don't actually make the .o file.
+# Define a pattern rule that compiles every .cpp file into a .o file
 PHONY	+= build_info
-$(ODIR)/%.o : %.c | build_info
+$(ODIR)/%.o : %.cpp | build_info
 	@mkdir -p $(dir $@)
 	@printf "${L_BLUE}[prereq]: ${L_GREEN}%-30s ${L_BLUE}[target]: ${L_GREEN}%s${RESET}\n" "$<" "$@"
 	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
@@ -86,11 +91,11 @@ build_info:
 PHONY	+= clean
 clean: ## cleans all the obj files
 	@$(RM) $(OBJ)
+#	@$(RM) $(ODIR)/*.o  # Only remove object files
 
 PHONY	+= fclean
 fclean: clean removeSANITIZED ## uses the rule clean and removes the obsolete files
 	@$(RM) $(NAME) $(ODIR) $(DEBUGODIR) $(OBS)
-#	@$(MAKE) fclean -C $(LIBC_DIR)
 
 PHONY	+= re
 re: fclean all ## does fclean and all
@@ -101,7 +106,6 @@ test: $(NAME) ## Rule to run the program
 
 PHONY	+=	ircserver
 SHIFT	=	$(eval O=$(shell echo $$((($(O)%15)+1))))
-
 ircserver:
 	@echo "$(C)$(O)$(L)+----------------------------------------+$(RESET)"
 	@echo "$(C)$(O)$(L)|  _                                     |";
@@ -135,7 +139,9 @@ help: ## prints a list of the possible commands
 	@printf "${L_MAGENTA}Option:${RESET}\n"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; \
 	{printf "${L_GREEN}%-15s ${L_BLUE}%s${RESET}\n", $$1, $$2}'
-	@printf "%-35s ${L_BLUE}This MAKE has Super Cow Powers.${RESET}\n"
+	@printf "\n${L_GREEN}NOTE:%-10s ${L_BLUE}run make to build the project with default args or \\ \n \
+	%-15swith args 'mode=debug' to run in debug mode${RESET}\n"
+	@printf "\n%-35s ${L_BLUE}This MAKE has Super Cow Powers.${RESET}\n"
 	@echo "${L_CYAN}# ---------------------------------------------------------------- #$(RESET)"
 
 .DEFAULT:
