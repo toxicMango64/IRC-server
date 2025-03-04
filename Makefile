@@ -58,7 +58,6 @@ ifeq ($(mode), debug) ## checks for debug mode
   	all: build_info $(NAME) info
   else
   	all: createSANITIZED clean build_info $(NAME) info
-	@echo "Creating sanitized flag: ${SANITIZED_FLAG}"
   endif
 else
   ifeq ($(SANITIZED_EXISTS), 1)
@@ -69,10 +68,10 @@ else
 endif
 
 createSANITIZED:
-	touch $(SANITIZED_FLAG)
+	@touch $(SANITIZED_FLAG)
 
 removeSANITIZED:
-	$(RM) $(SANITIZED_FLAG)
+	@$(RM) $(SANITIZED_FLAG)
 
 # non-phony targets
 $(NAME): $(OBJ)
@@ -90,7 +89,7 @@ build_info:
 
 PHONY	+= clean
 clean: ## cleans all the obj files
-	@$(RM) $(OBJ)
+	@@$(RM) $(OBJ)
 #	@$(RM) $(ODIR)/*.o  # Only remove object files
 
 PHONY	+= fclean
@@ -103,6 +102,8 @@ re: fclean all ## does fclean and all
 test: $(NAME) ## Rule to run the program
 	@echo "Running the program..."
 	@./$(NAME)
+	@${MAKE} re
+	@${MAKE} fclean
 
 PHONY	+=	ircserver
 SHIFT	=	$(eval O=$(shell echo $$((($(O)%15)+1))))
@@ -139,8 +140,8 @@ help: ## prints a list of the possible commands
 	@printf "${L_MAGENTA}Option:${RESET}\n"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; \
 	{printf "${L_GREEN}%-15s ${L_BLUE}%s${RESET}\n", $$1, $$2}'
-	@printf "\n${L_GREEN}NOTE:%-10s ${L_BLUE}run make to build the project with default args or \\ \n \
-	%-15swith args 'mode=debug' to run in debug mode${RESET}\n"
+	@printf "\n${L_GREEN}NOTE:%-10s ${L_BLUE}run make to build the project or with args \\ \n \
+	%-15s'make mode=debug' to run in debug mode${RESET}\n"
 	@printf "\n%-35s ${L_BLUE}This MAKE has Super Cow Powers.${RESET}\n"
 	@echo "${L_CYAN}# ---------------------------------------------------------------- #$(RESET)"
 
