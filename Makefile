@@ -35,7 +35,7 @@ endif
 # --------------------------------------------------------------------------- #"
 
 # Source files
-SRCDIR		:=	./src/
+SRCDIR		:=	src/
 
 # SRC	:=	$(SRCDIR)main.cpp
 SRC	:=	$(SRCDIR)test.cpp
