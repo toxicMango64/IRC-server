@@ -9,7 +9,7 @@ UNAME	=	$(shell uname -s)
 NAME	=	ircserv
 RM		=	rm -fr
 INC		:=	./inc/
-CFLAGS	+=	-Wall -Wextra -Werror -I${INC}
+CFLAGS	+=	-Wall -Wextra -Werror -I${INC} -std=c++98
 SANITIZE	:=	-fsanitize=address
 
 OBS		+=	$(NAME).dSYM \
@@ -24,7 +24,7 @@ ifeq ($(UNAME), Darwin) # mac
   NUMPROC	:=  $(shell sysctl -n hw.ncpu)
   CPPFLAGS	+=  
 else ifeq ($(UNAME), Linux) # linux
-  CC	:=	clang-19
+  CC	:=	clang++
   NUMPROC	:=  $(shell grep -c ^processor /proc/cpuinfo)
   CPPFLAGS	+=  
 else # or others
