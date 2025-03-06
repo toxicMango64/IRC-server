@@ -14,7 +14,8 @@ SANITIZE	:=	-fsanitize=address
 
 OBS		+=	$(NAME).dSYM \
 			.DS_Store \
-			.vscode
+			.vscode \
+			output.log
 
 # **************************************************************************** #
 #  SYSTEM SPECIFIC SETTINGS
@@ -37,8 +38,9 @@ endif
 # Source files
 SRCDIR		:=	src/
 
-# SRC	:=	$(SRCDIR)main.cpp
-SRC	:=	$(SRCDIR)test.cpp
+SRC	:=	$(SRCDIR)main.cpp \
+		$(SRCDIR)server.cpp \
+		$(SRCDIR)server_utils.cpp
 
 # Object files
 ODIR	:=	obj
@@ -61,9 +63,9 @@ ifeq ($(mode), debug) ## checks for debug mode
   endif
 else
   ifeq ($(SANITIZED_EXISTS), 1)
-    all: removeSANITIZED clean $(NAME) ircserv
+    all: removeSANITIZED clean $(NAME) ircserver
   else
-    all: $(NAME) ircserv
+    all: $(NAME) ircserver
   endif
 endif
 
@@ -99,11 +101,15 @@ fclean: clean removeSANITIZED ## uses the rule clean and removes the obsolete fi
 PHONY	+= re
 re: fclean all ## does fclean and all
 
-test: $(NAME) ## Rule to run the program
-	@echo "Running the program..."
-	@./$(NAME)
-	@${MAKE} re
-	@${MAKE} fclean
+PHONY	+= test
+test:
+	@make re
+	@echo "\nTesting valid cases:"
+	@./test_irc.sh 6667 "pass" || true
+	@./test_irc.sh 1234 "secret" || true
+	@echo "\nTesting invalid cases:"
+	@./test_irc.sh 6667 || true
+	@./test_irc.sh "no_port" || true
 
 PHONY	+=	ircserver
 SHIFT	=	$(eval O=$(shell echo $$((($(O)%15)+1))))
