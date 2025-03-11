@@ -30,6 +30,17 @@ bool validatePortString(const std::string& portStr) {
 	return (true);
 }
 
+#include <iostream>
+#include <sstream>
+#include <string>
+
+long stringToLong(const std::string& str) {
+	std::istringstream iss(str);
+	long result;
+	iss >> result; // Extracts the long value from the string stream
+	return result;
+}
+
 bool validatePort(const std::string& portStr, int& result) {
 	std::string processed = portStr;
 	trimWhitespace(processed);
@@ -37,7 +48,7 @@ bool validatePort(const std::string& portStr, int& result) {
 	if (!validatePortString(processed)) return (false);
 
 	try {
-		long port = std::stol(processed);
+		long port = stringToLong(processed);
 		if (port < MIN_PORT || port > MAX_PORT) {
 			std::cerr << "Port out of range (" 
 					<< MIN_PORT << "-" << MAX_PORT << ")\n";
