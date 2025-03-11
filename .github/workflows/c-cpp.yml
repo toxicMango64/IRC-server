@@ -41,7 +41,7 @@ jobs:
         run: |
           make clean
           make CXXFLAGS="-Wall -Wextra -Werror -std=c++98 --coverage"
-          ./path/to/your/test/executable
+          ./ircserv # ./path/to/your/test/executable
           lcov --capture --directory . --output-file coverage.info
           lcov --remove coverage.info '/usr/*' --output-file coverage.info
           bash <(curl -s https://codecov.io/bash) -f coverage.info
