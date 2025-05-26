@@ -1,14 +1,11 @@
-// server.h
-#ifndef SERVER_H
-# define SERVER_H
-
-// #include "server_utils.hpp"
-// #include <algorithm>
-// #include <stdexcept>
-// #include <iostream>
-
+// server.hpp
 #pragma once
+
+#include "utils.hpp"
 #include <string>
+#include <iostream>
+#include <stdexcept>
+// #include <algorithm>
 
 // enum class e_irc : std::uint16_t {
 enum e_irc {
@@ -18,13 +15,11 @@ enum e_irc {
 };
 
 class Server {
-public:
-	Server(int port, const std::string& password);
-	bool isValid() const;
-	
-private:
-	int port;
-	std::string password;
+	public:
+		Server(int port, const std::string& password);
+		bool isValid() const;
+		
+	private:
+		int port;
+		std::string password;
 };
-
-#endif // SERVER_H
