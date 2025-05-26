@@ -1,5 +1,5 @@
-#include "../inc/server.hpp"
-#include "../inc/server_utils.hpp"
+#include "../inc/Server.hpp"
+#include "../inc/utils.hpp"
 
 Server::Server(int port, const std::string& password) 
 	: port(port), password(password) {}
