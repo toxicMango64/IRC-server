@@ -39,8 +39,8 @@ endif
 SRCDIR		:=	src/
 
 SRC	:=	$(SRCDIR)main.cpp \
-		$(SRCDIR)server.cpp \
-		$(SRCDIR)server_utils.cpp
+		$(SRCDIR)Server.cpp \
+		$(SRCDIR)utils.cpp
 
 # Object files
 ODIR	:=	obj
@@ -185,3 +185,20 @@ L_MAGENTA	:=	\033[0;95m
 C			:=	\033[38;5;
 O			:=	72
 L			:=	m
+
+# /irc_server_project
+# ├── Makefile
+# ├── include/
+# │   ├── Server.hpp
+# │   ├── Client.hpp
+# │   ├── Channel.hpp
+# │   ├── CommandHandler.hpp
+# │   └── Utils.hpp
+# ├── src/
+# │   ├── main.cpp
+# │   ├── Server.cpp
+# │   ├── Client.cpp
+# │   ├── Channel.cpp
+# │   ├── CommandHandler.cpp
+# │   └── Utils.cpp
+# └── README.md
