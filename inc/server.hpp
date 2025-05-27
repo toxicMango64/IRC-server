@@ -15,11 +15,11 @@ enum e_irc {
 };
 
 class Server {
-	public:
-		Server(int port, const std::string& password);
-		bool isValid() const;
-		
-	private:
-		int port;
-		std::string password;
+private:
+	int port;
+	std::string password;
+
+public:
+	Server(int port, const std::string& password);
+	bool isValid() const;
 };
