@@ -38,9 +38,12 @@ endif
 # Source files
 SRCDIR		:=	src/
 
-SRC	:=	$(SRCDIR)main.cpp \
+SRC	:=	$(SRCDIR)Channel.cpp \
+		$(SRCDIR)Client.cpp \
+		$(SRCDIR)CommandHandler.cpp \
 		$(SRCDIR)Server.cpp \
-		$(SRCDIR)utils.cpp
+		$(SRCDIR)Utils.cpp \
+		$(SRCDIR)main.cpp
 
 # Object files
 ODIR	:=	obj/
