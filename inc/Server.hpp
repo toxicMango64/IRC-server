@@ -22,4 +22,5 @@ private:
 public:
 	Server(int port, const std::string& password);
 	bool isValid() const;
+	void run();
 };
