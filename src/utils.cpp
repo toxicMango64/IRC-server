@@ -1,5 +1,4 @@
 #include "../inc/Server.hpp"
-#include "../inc/utils.hpp"
 
 /**
  * @brief Trims trailing/leading whitespace
