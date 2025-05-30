@@ -25,7 +25,7 @@ ifeq ($(UNAME), Darwin) # mac
   NUMPROC	:=  $(shell sysctl -n hw.ncpu)
   CPPFLAGS	+=  
 else ifeq ($(UNAME), Linux) # linux
-  CC	:=	clang++
+  CC	:=	clang++-19
   NUMPROC	:=  $(shell grep -c ^processor /proc/cpuinfo)
   CPPFLAGS	+=  
 else # or others
@@ -43,8 +43,8 @@ SRC	:=	$(SRCDIR)main.cpp \
 		$(SRCDIR)utils.cpp
 
 # Object files
-ODIR	:=	obj
-OBJ		:=	$(SRC:%.cpp=$(ODIR)/%.o)
+ODIR	:=	obj/
+OBJ		:=	$(patsubst %.cpp,$(ODIR)%.o,$(notdir $(SRC)))
 
 SANITIZED_FLAG	=	.sanitized
 
@@ -81,7 +81,7 @@ $(NAME): $(OBJ)
 
 # Define a pattern rule that compiles every .cpp file into a .o file
 PHONY	+= build_info
-$(ODIR)/%.o : %.cpp | build_info
+$(ODIR)%.o: $(SRCDIR)%.cpp | build_info
 	@mkdir -p $(dir $@)
 	@printf "${L_BLUE}[prereq]: ${L_GREEN}%-30s ${L_BLUE}[target]: ${L_GREEN}%s${RESET}\n" "$<" "$@"
 	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
@@ -91,8 +91,7 @@ build_info:
 
 PHONY	+= clean
 clean: ## cleans all the obj files
-	@@$(RM) $(OBJ)
-#	@$(RM) $(ODIR)/*.o  # Only remove object files
+	@$(RM) $(ODIR)/*.o  # Only remove object files
 
 PHONY	+= fclean
 fclean: clean removeSANITIZED ## uses the rule clean and removes the obsolete files
