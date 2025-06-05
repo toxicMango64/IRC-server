@@ -37,14 +37,14 @@ jobs:
             # - name: Run unit tests
             #   run: ./path/to/your/test/executable # Replace with the path to your test executable
 
-            - name: Generate Code Coverage
-              run: |
-                  make clean
-                  make CXXFLAGS="-Wall -Wextra -Werror -std=c++98 --coverage"
-                  ./ircserv 223 password # ./path/to/your/test/executable
-                  lcov --capture --directory . --output-file coverage.info --ignore-errors empty unused
-                  lcov --remove coverage.info '/usr/*' --output-file coverage.info --ignore-errors empty unused
-                  bash <(curl -s https://codecov.io/bash) -f coverage.info
+            # - name: Generate Code Coverage
+            #   run: |
+            #       make clean
+            #       make CXXFLAGS="-Wall -Wextra -Werror -std=c++98 --coverage"
+            #       ./ircserv 223 password # ./path/to/your/test/executable
+            #       lcov --capture --directory . --output-file coverage.info --ignore-errors empty unused
+            #       lcov --remove coverage.info '/usr/*' --output-file coverage.info --ignore-errors empty unused
+            #       bash <(curl -s https://codecov.io/bash) -f coverage.info
 
             # - name: Generate Documentation
             #   run: doxygen Doxyfile # Ensure you have a Doxyfile configured
