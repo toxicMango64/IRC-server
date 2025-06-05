@@ -43,7 +43,7 @@ jobs:
                   make CXXFLAGS="-Wall -Wextra -Werror -std=c++98 --coverage"
                   ./ircserv 223 password # ./path/to/your/test/executable
                   lcov --capture --directory . --output-file coverage.info --ignore-errors empty
-                  lcov --remove coverage.info '/usr/*' --output-file coverage.info
+                  lcov --remove coverage.info '/usr/*' --output-file coverage.info --ignore-errors empty
                   bash <(curl -s https://codecov.io/bash) -f coverage.info
 
             # - name: Generate Documentation
