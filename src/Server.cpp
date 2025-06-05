@@ -60,24 +60,36 @@ void    Server::run(void) {
             sockaddr_in clientAddress;
             socklen_t clientLen = sizeof(clientAddress);
             int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientLen);
+
             if (clientSocket >= 0) {
                 pollfd clientPollfd = {clientSocket, POLLIN, 0};
+                Client client(clientSocket);
                 pollfds.push_back(clientPollfd);
+                connectedClients.insert(std::make_pair(clientSocket, client));
                 std::cout << "New client connected: " << clientSocket << std::endl;
             }
         }
+
         for (size_t i = 1; i < pollfds.size(); ++i) {
             if (pollfds[i].revents & POLLIN) {
                 char buffer[512];
                 ssize_t bytesRead = recv(pollfds[i].fd, buffer, sizeof(buffer) - 1, 0);
+
                 if (bytesRead > 0) {
+                    std::string output;
                     buffer[bytesRead] = '\0';
-                    std::cout << "Received from client " << pollfds[i].fd << ": " << buffer << std::endl;
+                    // std::cout << "Received from client " << pollfds[i].fd << ": ";
                     // Parse and handle IRC commands here
+                    // TODO: Improve this parsing logic
+                    handleBuffer(connectedClients.at(pollfds[i].fd), buffer, output);
+                    if (!output.empty()) {
+                        send(pollfds[i].fd, output.c_str(), output.length(), 0);
+                    }
                 } else {
                     std::cout << "Client disconnected: " << pollfds[i].fd << std::endl;
                     close(pollfds[i].fd);
                     pollfds.erase(pollfds.begin() + i);
+                    connectedClients.erase(pollfds[i].fd);
                     --i;
                 }
             }

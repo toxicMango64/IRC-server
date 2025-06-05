@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <iostream>
+#include <map>
 #include <netinet/in.h>
 #include <poll.h>
 #include <stdexcept>
@@ -11,6 +12,8 @@
 #include <unistd.h>
 #include <vector>
 
+#include "CommandHandler.hpp"
+#include "Client.hpp"
 #include "Utils.hpp"
 
 // enum class e_irc : std::uint16_t {
@@ -25,6 +28,7 @@ class Server {
         Server( int port, const std::string& password );
         bool isValid( void ) const;
     	void run( void );
+        std::map<int, Client> connectedClients;
     
     // Exception classes
     public:
