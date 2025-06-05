@@ -26,19 +26,39 @@ SANITIZE    := -fsanitize=address
 LDFLAGS     :=
 CPPFLAGS    :=
 
+# ------------------------------- Variables ---------------------------------- #
+
+RM     := rm -fr
+OBS    := $(NAME).dSYM .DS_Store .vscode output.log
+
+SHIFT  = $(eval O=$(shell echo $$((($(O)%15)+1))))
+
 # # ------------------------------ System Detection ---------------------------- #
 
 UNAME := $(shell uname -s)
+NUMPROC :=
+CC :=
 
+# CPU core detection
 ifeq ($(UNAME), Darwin)
-    CC := g++
+    CC := c++
     NUMPROC := $(shell sysctl -n hw.ncpu)
-else ifeq ($(UNAME), Linux)
-    CC := clang++-19
-    NUMPROC := $(shell grep -c ^processor /proc/cpuinfo)
+else ifeq ($(UNAME), Linux) # Detect best available compiler
+	CC := $(shell \
+		for bin in clang++-19 clang++-18 clang++-17 clang++ g++-13 g++-12 g++ ; do \
+			if command -v $$bin >/dev/null 2>&1; then echo $$bin; break; fi; \
+		done \
+	)
+	NUMPROC := $(shell grep -c ^processor /proc/cpuinfo)
 else
-    $(error Unsupported OS)
+	$(error Unsupported OS: $(UNAME))
 endif
+
+# Optional: Display detected compiler
+COMPILER_VERSION := $(shell $(CC) --version | head -n 1)
+# $(info [INFO] Compiler: $(CC))
+# $(info [INFO] Version : $(COMPILER_VERSION))
+# $(info [INFO] CPU Cores: $(NUMPROC))
 
 # ------------------------------ Build Mode Logic ---------------------------- #
 
@@ -111,7 +131,7 @@ info: ## prints project based info
 	@echo "$(L_GREEN)NAME       $(RESET): $(L_MAGENTA)$(NAME)$(RESET)"
 	@echo "$(L_GREEN)UNAME      $(RESET): $(L_MAGENTA)$(UNAME)$(RESET)"
 	@echo "$(L_GREEN)NUMPROC    $(RESET): $(L_MAGENTA)$(NUMPROC)$(RESET)"
-	@echo "$(L_GREEN)CC         $(RESET): $(L_MAGENTA)$(CC)$(RESET)"
+	@echo "$(L_GREEN)CC         $(RESET): $(L_MAGENTA)$(COMPILER_VERSION)$(RESET)"
 	@echo "$(L_GREEN)CFLAGS     $(RESET): $(L_MAGENTA)$(CFLAGS)$(RESET)"
 	@echo "$(L_GREEN)LDFLAGS    $(RESET): $(L_MAGENTA)$(LDFLAGS)$(RESET)"
 	@echo "$(L_GREEN)CPPFLAGS   $(RESET): $(L_MAGENTA)$(CPPFLAGS)$(RESET)"
