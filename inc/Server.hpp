@@ -1,11 +1,17 @@
 // server.hpp
 #pragma once
 
-#include "Utils.hpp"
-#include <string>
+#include <exception>
 #include <iostream>
+#include <netinet/in.h>
+#include <poll.h>
 #include <stdexcept>
-// #include <algorithm>
+#include <string>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <vector>
+
+#include "Utils.hpp"
 
 // enum class e_irc : std::uint16_t {
 enum e_irc {
@@ -15,12 +21,31 @@ enum e_irc {
 };
 
 class Server {
-private:
-	int port;
-	std::string password;
+    public:
+        Server( int port, const std::string& password );
+        bool isValid( void ) const;
+    	void run( void );
+    
+    // Exception classes
+    public:
+        class SocketCreationException: public std::exception {
+            public:
+                virtual const char* what() const throw();
+        };
+        class SocketBindingException: public std::exception {
+            public:
+                virtual const char* what() const throw();
+        };
+        class SocketListeningException: public std::exception {
+            public:
+                virtual const char* what() const throw();
+        };
+        class PollException: public std::exception {
+            public:
+                virtual const char* what() const throw();
+        };
 
-public:
-	Server(int port, const std::string& password);
-	bool isValid() const;
-	void run();
+    private:
+        int _port;
+    	std::string _password;
 };

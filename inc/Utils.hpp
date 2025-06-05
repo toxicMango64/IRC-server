@@ -22,5 +22,5 @@
 //  */
 // void logMessage(LogLevel level, std::initializer_list<std::string> messages);
 
-bool validatePort(const std::string& portStr, int& result);
-bool validatePassword(const std::string& password);
+bool validatePort( const std::string& portStr, int& result );
+bool validatePassword( const std::string& password );
