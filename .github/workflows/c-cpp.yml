@@ -1,64 +1,64 @@
 name: C++ IRC Server CI
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+    build-and-test:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
 
-      - name: Set up C++ environment
-        run: |
-          sudo apt update
-          sudo apt install -y g++ make cppcheck lcov doxygen
+            - name: Set up C++ environment
+              run: |
+                  sudo apt update
+                  sudo apt install -y g++ make cppcheck lcov doxygen
 
-      - name: Install Dependencies
-        run: |
-          # Uncomment if using Conan for dependency management
-          # curl -s https://get.conan.io | python
-          # conan install . --build=missing
-          echo "Add any dependencies installation commands here."
+            - name: Install Dependencies
+              run: |
+                  # Uncomment if using Conan for dependency management
+                  # curl -s https://get.conan.io | python
+                  # conan install . --build=missing
+                  echo "Add any dependencies installation commands here."
 
-      - name: Static Code Analysis
-        run: cppcheck --enable=all --inconclusive .
+            - name: Static Code Analysis
+              run: cppcheck --enable=all --inconclusive .
 
-      - name: Build the project
-        run: make CXXFLAGS="-Wall -Wextra -Werror -std=c++98"
+            - name: Build the project
+              run: make CXXFLAGS="-Wall -Wextra -Werror -std=c++98"
 
-      # - name: Run unit tests
-      #   run: ./path/to/your/test/executable # Replace with the path to your test executable
+            # - name: Run unit tests
+            #   run: ./path/to/your/test/executable # Replace with the path to your test executable
 
-      - name: Generate Code Coverage
-        run: |
-          make clean
-          make CXXFLAGS="-Wall -Wextra -Werror -std=c++98 --coverage"
-          ./ircserv 223 password # ./path/to/your/test/executable
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info
-          bash <(curl -s https://codecov.io/bash) -f coverage.info
+            - name: Generate Code Coverage
+              run: |
+                  make clean
+                  make CXXFLAGS="-Wall -Wextra -Werror -std=c++98 --coverage"
+                  ./ircserv 223 password # ./path/to/your/test/executable
+                  lcov --capture --directory . --output-file coverage.info --ignore-errors empty
+                  lcov --remove coverage.info '/usr/*' --output-file coverage.info
+                  bash <(curl -s https://codecov.io/bash) -f coverage.info
 
-      # - name: Generate Documentation
-      #   run: doxygen Doxyfile # Ensure you have a Doxyfile configured
+            # - name: Generate Documentation
+            #   run: doxygen Doxyfile # Ensure you have a Doxyfile configured
 
-      - name: Rollback Mechanism
-        if: failure()
-        run: |
-          echo "Rolling back to the previous stable version..."
-          # Insert rollback commands here, e.g., reverting to a previous commit or restoring a backup
+            - name: Rollback Mechanism
+              if: failure()
+              run: |
+                  echo "Rolling back to the previous stable version..."
+                  # Insert rollback commands here, e.g., reverting to a previous commit or restoring a backup
 
-      - name: Notify success
-        if: success()
-        run: echo "Build and tests succeeded!"
-      
-      - name: Notify failure
-        if: failure()
-        run: echo "Build or tests failed!"
+            - name: Notify success
+              if: success()
+              run: echo "Build and tests succeeded!"
+
+            - name: Notify failure
+              if: failure()
+              run: echo "Build or tests failed!"
