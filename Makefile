@@ -112,6 +112,52 @@ fclean: clean removeSANITIZED ## uses the rule clean and removes the obsolete fi
 PHONY	+= re
 re: fclean all ## does fclean and all
 
+TIDY_FLAGS =	'clang-analyzer-*,\
+				bugprone-*,\
+				performance-*,\
+				misc-const-correctness,\
+				misc-misplaced-const,\
+				cppcoreguidelines-avoid-const-or-ref-data-members,\
+				readability-avoid-const-params-in-decls,\
+				readability-const-return-type,\
+				readability-make-member-function-const,\
+				llvm-include-order,\
+				cppcoreguidelines-init-variables,\
+				llvmlibc-inline-function-decl,\
+				hicpp-braces-around-statements,\
+				readability-braces-around-statements,\
+				google-runtime-int,\
+				readability-implicit-bool-conversion,\
+				readability-isolate-declaration,\
+				readability-redundant-string-init,\
+				cppcoreguidelines-special-member-functions,\
+				hicpp-special-member-functions,\
+				readability-convert-member-functions-to-static,\
+				google-explicit-constructor,\
+				hicpp-explicit-conversions,\
+				hicpp-signed-bitwise,\
+				hicpp-deprecated-headers,\
+				modernize-deprecated-headers,\
+				misc-use-anonymous-namespace,\
+				misc-definitions-in-headers'
+
+TIDY_EXTRA_ARGS =	--extra-arg=-std=c++98 \
+					--extra-arg=-Iincludes \
+					--extra-arg=-Wno-c++98-compat
+
+CLANG_TIDY = clang-tidy-19
+
+PHONY	+= tidy
+tidy: fclean
+	@$(CLANG_TIDY) $(SRC) \
+	--checks=$(TIDY_FLAGS) \
+	$(TIDY_EXTRA_ARGS) \
+	--header-filter='includes/.*' \
+	--system-headers=false \
+	--quiet \
+	-- $(CXXFLAGS) $(INCLUDES)
+	@echo "✅ check complete"
+
 PHONY	+=	banner
 SHIFT	=	$(eval O=$(shell echo $$((($(O)%15)+1))))
 banner: ## prints the ircserv banner for the makefile
