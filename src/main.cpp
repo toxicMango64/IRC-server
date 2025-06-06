@@ -26,14 +26,14 @@ int main(const int ac, const char *const *av) {
 		return 1;
 	}
 	
-	int			port;
+	int	port = 0;
 	if (!validatePort(av[1], port) || (!validatePassword(av[2]))) {
 		return (1);
 	}
 	
 	try {
 		std::cout << "Server started on port " << port << "\n";
-		Server server(port, av[2]);
+		const Server server(port, av[2]);
 		// server.run();
 	} catch (const std::exception& e) {
 		std::cerr << "Error: " << e.what() << "\n";
