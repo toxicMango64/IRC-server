@@ -21,10 +21,11 @@ OBJ := $(patsubst %.cpp, $(ODIR)%.o, $(notdir $(SRC)))
 
 # ------------------------------ Compilation Flags --------------------------- #
 
-CFLAGS      += -Wall -Wextra -Werror -I$(INC) -std=c++98
-SANITIZE    := -fsanitize=address
-LDFLAGS     :=
-CPPFLAGS    :=
+CXXFLAGS	+= -Wall -Wextra -Werror -I$(INC) -std=c++98
+SANITIZE	:= -fsanitize=address
+LDFLAGS		:=
+CFLAGS		:=
+DEBUGFLAGS	:=
 
 # ------------------------------- Variables ---------------------------------- #
 
@@ -62,15 +63,16 @@ COMPILER_VERSION := $(shell $(CC) --version | head -n 1)
 
 # ------------------------------ Build Mode Logic ---------------------------- #
 
-mode ?=
+MODE ?=
 SANITIZED_EXISTS := $(shell [ -f $(SANITIZED_FLAG) ] && echo 1)
 
-ifeq ($(mode), debug)
-    CFLAGS += -g3 $(SANITIZE)
+PHONY	:= all
+ifeq ($(MODE), debug)
+    DEBUGFLAGS += -g3 $(SANITIZE)
     ifeq ($(SANITIZED_EXISTS), 1)
-        all: build_info $(NAME) info
+        all: build_mode_info $(NAME) info
     else
-        all: createSANITIZED clean build_info $(NAME) info
+        all: createSANITIZED clean build_mode_info $(NAME) info
     endif
 else
     ifeq ($(SANITIZED_EXISTS), 1)
@@ -80,20 +82,29 @@ else
     endif
 endif
 
-# ------------------------------ Targets ------------------------------------- #
+PHONY	+= build
+build:
+	@$(MAKE) -j$(NUMPROC)
 
+# --------------------------- Targets & Rules --------------------------------- #
+
+CXXFLAGS += $(DEBUGFLAGS)
 $(NAME): $(OBJ)
-	@$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(OBJ) -o $(NAME)
+	@$(CC) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $(NAME)
 
-$(ODIR)%.o: $(SRCDIR)%.cpp | build_info
-	@mkdir -p $(dir $@)
-	@printf "$(L_BLUE)[compiling]: $(L_GREEN)%-30s -> $(L_BLUE)%s$(RESET)\n" "$<" "$@"
-	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+PHONY	+= prepare
+prepare:
+	@mkdir -p $(ODIR)
 
 # Define a pattern rule that compiles every .cpp file into a .o file
-PHONY	+= build_info
-build_info: ## prints the build information
-	@echo "$(L_CYAN)[compiler]: $(L_MAGENTA)$(CC) $(CFLAGS) $(CPPFLAGS)$(RESET)"
+PHONY	+= build_mode_info
+build_mode_info: ## prints the build information
+	@echo "$(L_CYAN)[compiler]: $(L_MAGENTA)$(CC) $(CXXFLAGS) $(CFLAGS)$(RESET)"
+
+$(ODIR)%.o: $(SRCDIR)%.cpp | prepare build_mode_info
+	@mkdir -p $(dir $@)
+	@printf "$(L_BLUE)[compiling]: $(L_GREEN)%-30s -> $(L_BLUE)%s$(RESET)\n" "$<" "$@"
+	@$(CC) -c $(CXXFLAGS) $(CFLAGS) $< -o $@
 
 createSANITIZED:
 	@touch $(SANITIZED_FLAG)
@@ -128,15 +139,16 @@ banner: ## prints the ircserv banner for the makefile
 PHONY	+= info
 info: ## prints project based info
 	@echo "$(L_CYAN)# ------------------------- Build Info -------------------------- #$(RESET)"
-	@echo "$(L_GREEN)NAME       $(RESET): $(L_MAGENTA)$(NAME)$(RESET)"
-	@echo "$(L_GREEN)UNAME      $(RESET): $(L_MAGENTA)$(UNAME)$(RESET)"
-	@echo "$(L_GREEN)NUMPROC    $(RESET): $(L_MAGENTA)$(NUMPROC)$(RESET)"
-	@echo "$(L_GREEN)CC         $(RESET): $(L_MAGENTA)$(COMPILER_VERSION)$(RESET)"
-	@echo "$(L_GREEN)CFLAGS     $(RESET): $(L_MAGENTA)$(CFLAGS)$(RESET)"
-	@echo "$(L_GREEN)LDFLAGS    $(RESET): $(L_MAGENTA)$(LDFLAGS)$(RESET)"
-	@echo "$(L_GREEN)CPPFLAGS   $(RESET): $(L_MAGENTA)$(CPPFLAGS)$(RESET)"
-	@echo "$(L_GREEN)BUILD MODE $(RESET): $(L_MAGENTA)$(mode)$(RESET)"
-	@echo "$(L_GREEN)SRC        $(RESET):"
+	@echo "$(L_GREEN)NAME        $(RESET): $(L_MAGENTA)$(NAME)$(RESET)"
+	@echo "$(L_GREEN)UNAME       $(RESET): $(L_MAGENTA)$(UNAME)$(RESET)"
+	@echo "$(L_GREEN)NUMPROC     $(RESET): $(L_MAGENTA)$(NUMPROC)$(RESET)"
+	@echo "$(L_GREEN)CC          $(RESET): $(L_MAGENTA)$(COMPILER_VERSION)$(RESET)"
+	@echo "$(L_GREEN)CXXFLAGS    $(RESET): $(L_MAGENTA)$(CXXFLAGS)$(RESET)"
+	@echo "$(L_GREEN)LDFLAGS     $(RESET): $(L_MAGENTA)$(LDFLAGS)$(RESET)"
+	@echo "$(L_GREEN)CFLAGS      $(RESET): $(L_MAGENTA)$(CFLAGS)$(RESET)"
+	@echo "$(L_GREEN)DEBUGFLAGS  $(RESET): $(L_MAGENTA)$(DEBUGFLAGS)$(RESET)"
+	@echo "$(L_GREEN)BUILD MODE  $(RESET): $(L_MAGENTA)$(MODE)$(RESET)"
+	@echo "$(L_GREEN)SRC         $(RESET):"
 	@echo "$(L_BLUE)$(SRC)$(RESET)"
 	@echo "$(L_CYAN)# --------------------------------------------------------------- #$(RESET)"
 
@@ -150,7 +162,7 @@ help: ## prints a list of the possible commands
 	@echo "$(L_CYAN)# --------------------------------------------------------------- #$(RESET)"
 
 .DEFAULT:
-	@echo "${L_RED}[Error]${RESET}: ${L_BLUE}\tUnknown target '${L_RED}$@${L_BLUE}'.${RESET}"
+	@echo >&2 "${L_RED}[Error]${RESET}: ${L_BLUE}\tUnknown target '${L_RED}$@${L_BLUE}'.${RESET}"
 	@${MAKE} -s help
 
 # ----------------------------- Phony Targets -------------------------------- #
@@ -182,20 +194,3 @@ L_MAGENTA  := \033[0;95m
 C          := \033[38;5;
 O          := 72
 L          := m
-
-# /irc_server_project
-# ├── Makefile
-# ├── include/
-# │   ├── Server.hpp
-# │   ├── Client.hpp
-# │   ├── Channel.hpp
-# │   ├── CommandHandler.hpp
-# │   └── Utils.hpp
-# ├── src/
-# │   ├── main.cpp
-# │   ├── Server.cpp
-# │   ├── Client.cpp
-# │   ├── Channel.cpp
-# │   ├── CommandHandler.cpp
-# │   └── Utils.cpp
-# └── README.md
