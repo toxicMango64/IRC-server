@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
+#include <stdint.h>
 // #include <algorithm>
 
 // enum class e_irc : std::uint16_t {
