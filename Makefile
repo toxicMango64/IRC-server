@@ -70,9 +70,9 @@ PHONY	:= all
 ifeq ($(MODE), debug)
     DEBUGFLAGS += -g3 $(SANITIZE)
     ifeq ($(SANITIZED_EXISTS), 1)
-        all: build_mode_info $(NAME) info
+        all: build_info $(NAME) info
     else
-        all: createSANITIZED clean build_mode_info $(NAME) info
+        all: createSANITIZED clean build_info $(NAME) info
     endif
 else
     ifeq ($(SANITIZED_EXISTS), 1)
@@ -84,7 +84,8 @@ endif
 
 PHONY	+= build
 build:
-	@$(MAKE) -j$(NUMPROC)
+	@echo "$(L_BLUE)  [info]:  $(L_GREEN)Starting parallel build using '$(NUMPROC)'' threads...$(RESET)"
+	@$(MAKE) -s -j$(NUMPROC)
 
 # --------------------------- Targets & Rules --------------------------------- #
 
@@ -96,24 +97,21 @@ PHONY	+= prepare
 prepare:
 	@mkdir -p $(ODIR)
 
-# Define a pattern rule that compiles every .cpp file into a .o file
-PHONY	+= build_mode_info
-build_mode_info: ## prints the build information
-	@echo "$(L_CYAN)[compiler]: $(L_MAGENTA)$(CC) $(CXXFLAGS) $(CFLAGS)$(RESET)"
-
-$(ODIR)%.o: $(SRCDIR)%.cpp | prepare build_mode_info
+$(ODIR)%.o: $(SRCDIR)%.cpp | prepare build_info
 	@mkdir -p $(dir $@)
-	@printf "$(L_BLUE)[compiling]: $(L_GREEN)%-30s -> $(L_BLUE)%s$(RESET)\n" "$<" "$@"
+	@printf "$(L_BLUE)  [info]:  $(L_GREEN)%-30s -> $(L_BLUE)%s$(RESET)\n" "$<" "$@"
 	@$(CXX) -c $(CFLAGS) $(CXXFLAGS) $< -o $@
 
 # Define a pattern rule that compiles every .cpp file into a .o file
 PHONY	+= build_info
 build_info: ## prints the build information
-	@echo "$(L_CYAN)[compiler]: $(L_MAGENTA)$(CXX) $(CFLAGS) $(CXXFLAGS)$(RESET)"
+	@echo "$(L_BLUE)  [info]:  $(L_MAGENTA)$(CXX) $(CFLAGS) $(CXXFLAGS)$(RESET)"
 
+PHONY	+= createSANITIZED
 createSANITIZED:
 	@touch $(SANITIZED_FLAG)
 
+PHONY	+= removeSANITIZED
 removeSANITIZED:
 	@$(RM) $(SANITIZED_FLAG)
 
@@ -164,7 +162,7 @@ TIDY_EXTRA_ARGS =	--extra-arg=-std=c++98 \
 CLANG_TIDY = clang-tidy-19
 
 PHONY	+= tidy
-tidy:
+tidy: ## run clang-tidy on project 
 	@$(CLANG_TIDY) $(SRC) \
 	--checks=$(TIDY_FLAGS) \
 	$(TIDY_EXTRA_ARGS) \
@@ -199,15 +197,15 @@ scan: fclean ## Scan-build static analysis
 PHONY	+=	banner
 SHIFT	=	$(eval O=$(shell echo $$((($(O)%15)+1))))
 banner: ## prints the ircserv banner for the makefile
-	@echo "$(C)$(O)$(L)+----------------------------------------+$(RESET)"
-	@echo "$(C)$(O)$(L)|  _                                     |";
+	@echo " $(C)$(O)$(L)+----------------------------------------+$(RESET)"
+	@echo " $(C)$(O)$(L)|  _                                     |";
 	$(SHIFT)
-	@echo "$(C)$(O)$(L)| (_) _ __  ___  ___   ___  _ __ __   __ |";
-	@echo "$(C)$(O)$(L)| | || '__|/ __|/ __| / _ \| '__|\ \ / / |";
+	@echo " $(C)$(O)$(L)| (_) _ __  ___  ___   ___  _ __ __   __ |";
+	@echo " $(C)$(O)$(L)| | || '__|/ __|/ __| / _ \| '__|\ \ / / |";
 	$(SHIFT)
-	@echo "$(C)$(O)$(L)| | || |  | (__ \__ \|  __/| |    \ V /  |";
-	@echo "$(C)$(O)$(L)| |_||_|   \___||___/ \___||_|     \_/   |";
-	@echo "$(C)$(O)$(L)+----------------------------------------+$(RESET)"
+	@echo " $(C)$(O)$(L)| | || |  | (__ \__ \|  __/| |    \ V /  |";
+	@echo " $(C)$(O)$(L)| |_||_|   \___||___/ \___||_|     \_/   |";
+	@echo " $(C)$(O)$(L)+----------------------------------------+$(RESET)"
 
 PHONY	+= info
 info: ## prints project based info
