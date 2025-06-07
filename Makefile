@@ -37,14 +37,14 @@ SHIFT  = $(eval O=$(shell echo $$((($(O)%15)+1))))
 
 UNAME := $(shell uname -s)
 NUMPROC :=
-CC :=
+CXX :=
 
 # CPU core detection
 ifeq ($(UNAME), Darwin)
-    CC := c++
+    CXX := c++
     NUMPROC := $(shell sysctl -n hw.ncpu)
 else ifeq ($(UNAME), Linux) # Detect best available compiler
-	CC := $(shell \
+	CXX := $(shell \
 		for bin in clang++-19 clang++-18 clang++-17 clang++ g++-13 g++-12 g++ ; do \
 			if command -v $$bin >/dev/null 2>&1; then echo $$bin; break; fi; \
 		done \
@@ -55,8 +55,8 @@ else
 endif
 
 # Optional: Display detected compiler
-COMPILER_VERSION := $(shell $(CC) --version | head -n 1)
-# $(info [INFO] Compiler: $(CC))
+COMPILER_VERSION := $(shell $(CXX) --version | head -n 1)
+# $(info [INFO] Compiler: $(CXX))
 # $(info [INFO] Version : $(COMPILER_VERSION))
 # $(info [INFO] CPU Cores: $(NUMPROC))
 
@@ -83,17 +83,17 @@ endif
 # ------------------------------ Targets ------------------------------------- #
 
 $(NAME): $(OBJ)
-	@$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(OBJ) -o $(NAME)
+	@$(CXX) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(OBJ) -o $(NAME)
 
 $(ODIR)%.o: $(SRCDIR)%.cpp | build_info
 	@mkdir -p $(dir $@)
 	@printf "$(L_BLUE)[compiling]: $(L_GREEN)%-30s -> $(L_BLUE)%s$(RESET)\n" "$<" "$@"
-	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+	@$(CXX) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 # Define a pattern rule that compiles every .cpp file into a .o file
 PHONY	+= build_info
 build_info: ## prints the build information
-	@echo "$(L_CYAN)[compiler]: $(L_MAGENTA)$(CC) $(CFLAGS) $(CPPFLAGS)$(RESET)"
+	@echo "$(L_CYAN)[compiler]: $(L_MAGENTA)$(CXX) $(CFLAGS) $(CPPFLAGS)$(RESET)"
 
 createSANITIZED:
 	@touch $(SANITIZED_FLAG)
@@ -148,7 +148,7 @@ TIDY_EXTRA_ARGS =	--extra-arg=-std=c++98 \
 CLANG_TIDY = clang-tidy-19
 
 PHONY	+= tidy
-tidy: fclean
+tidy:
 	@$(CLANG_TIDY) $(SRC) \
 	--checks=$(TIDY_FLAGS) \
 	$(TIDY_EXTRA_ARGS) \
@@ -157,6 +157,28 @@ tidy: fclean
 	--quiet \
 	-- $(CXXFLAGS) $(INCLUDES)
 	@echo "✅ check complete"
+
+
+# DETECTED_SCAN_BUILD := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v scan-build-$(v) >/dev/null 2>&1 && echo scan-build-$(v)),scan-build-$(v))))
+# Try to find the newest scan-build from version 21 down to 15
+# If none are found in that range, default to scan-build-20 (original value)
+PHONY	+= scan
+scan: fclean ## Scan-build static analysis
+	DETECTED_SCAN_BUILD := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v scan-build-$(v) && echo scan-build-$(v)),scan-build-$(v))))
+	ifeq ($(DETECTED_SCAN_BUILD),)
+		FOUND_SCAN_BUILD = scan-build-20
+	else
+		FOUND_SCAN_BUILD = $(DETECTED_SCAN_BUILD)
+	endif
+	@echo "🔍 Running scan-build..."
+	$(info Using scan-build: $(FOUND_SCAN_BUILD))
+	@$(FOUND_SCAN_BUILD) --use-CXX=$(CXX) --use-c++=$(CXX) \
+	-enable-checker alpha \
+	-enable-checker security -enable-checker unix -enable-checker core \
+	-enable-checker cplusplus -enable-checker deadcode -enable-checker nullability \
+	-analyzer-config aggressive-binary-operation-simplification=true \
+	--status-bugs -v -V make
+	@echo "✅ Scan-build analysis complete"
 
 PHONY	+=	banner
 SHIFT	=	$(eval O=$(shell echo $$((($(O)%15)+1))))
@@ -177,7 +199,7 @@ info: ## prints project based info
 	@echo "$(L_GREEN)NAME       $(RESET): $(L_MAGENTA)$(NAME)$(RESET)"
 	@echo "$(L_GREEN)UNAME      $(RESET): $(L_MAGENTA)$(UNAME)$(RESET)"
 	@echo "$(L_GREEN)NUMPROC    $(RESET): $(L_MAGENTA)$(NUMPROC)$(RESET)"
-	@echo "$(L_GREEN)CC         $(RESET): $(L_MAGENTA)$(COMPILER_VERSION)$(RESET)"
+	@echo "$(L_GREEN)CXX         $(RESET): $(L_MAGENTA)$(COMPILER_VERSION)$(RESET)"
 	@echo "$(L_GREEN)CFLAGS     $(RESET): $(L_MAGENTA)$(CFLAGS)$(RESET)"
 	@echo "$(L_GREEN)LDFLAGS    $(RESET): $(L_MAGENTA)$(LDFLAGS)$(RESET)"
 	@echo "$(L_GREEN)CPPFLAGS   $(RESET): $(L_MAGENTA)$(CPPFLAGS)$(RESET)"
