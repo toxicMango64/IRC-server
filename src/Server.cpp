@@ -8,3 +8,67 @@ bool Server::isValid() const {
 	return (port >= MIN_PORT && port <= MAX_PORT) && !password.empty();
 }
 
+void Server::run() {
+	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (server_fd < 0)
+		throw std::runtime_error("Failed to create socket");
+
+	// Make server socket non-blocking
+	if (fcntl(server_fd, F_SETFL, fcntl(server_fd, F_GETFL) | O_NONBLOCK) < 0)
+		throw std::runtime_error("Failed to set non-blocking");
+
+	// Bind server socket
+	struct sockaddr_in addr;
+	std::memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(this->port);
+
+	if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+		throw std::runtime_error("Bind failed");
+
+	if (listen(server_fd, SOMAXCONN) < 0)
+		throw std::runtime_error("Listen failed");
+
+	std::vector<pollfd> fds;
+	pollfd server_poll;
+	server_poll.fd = server_fd;
+	server_poll.events = POLLIN;
+	server_poll.revents = 0;
+	fds.push_back(server_poll);
+
+	char buffer[512];
+
+	while (true) {
+		int poll_count = poll(&fds[0], fds.size(), -1);
+		if (poll_count < 0)
+			throw std::runtime_error("Poll failed");
+
+		for (size_t i = 0; i < fds.size(); ++i) {
+			if (fds[i].revents & POLLIN) {
+				if (fds[i].fd == server_fd) {
+					int client_fd = accept(server_fd, NULL, NULL);
+					if (client_fd > 0) {
+						fcntl(client_fd, F_SETFL, fcntl(client_fd, F_GETFL) | O_NONBLOCK);
+						pollfd client_poll;
+						client_poll.fd = client_fd;
+						client_poll.events = POLLIN;
+						client_poll.revents = 0;
+						fds.push_back(client_poll);
+						debugPrint("New client connected.");
+					}
+				} else {
+					int n = recv(fds[i].fd, buffer, sizeof(buffer) - 1, 0);
+					if (n <= 0) {
+						close(fds[i].fd);
+						fds.erase(fds.begin() + i);
+						--i;
+					} else {
+						buffer[n] = '\0';
+						std::cout << ">> " << buffer;
+					}
+				}
+			}
+		}
+	}
+}
