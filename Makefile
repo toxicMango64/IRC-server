@@ -176,22 +176,22 @@ tidy: ## run clang-tidy on project
 # DETECTED_SCAN_BUILD := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v scan-build-$(v) >/dev/null 2>&1 && echo scan-build-$(v)),scan-build-$(v))))
 # Try to find the newest scan-build from version 21 down to 15
 # If none are found in that range, default to scan-build-20 (original value)
-PHONY	+= scan
+PHONY += scan
+
+SCAN_BUILD := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v scan-build-$(v)),scan-build-$(v))))
+ifeq ($(SCAN_BUILD),)
+SCAN_BUILD := scan-build-20
+endif
+
 scan: fclean ## Scan-build static analysis
-	DETECTED_SCAN_BUILD := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v scan-build-$(v) && echo scan-build-$(v)),scan-build-$(v))))
-	ifeq ($(DETECTED_SCAN_BUILD),)
-		FOUND_SCAN_BUILD = scan-build-20
-	else
-		FOUND_SCAN_BUILD = $(DETECTED_SCAN_BUILD)
-	endif
 	@echo "🔍 Running scan-build..."
-	$(info Using scan-build: $(FOUND_SCAN_BUILD))
-	@$(FOUND_SCAN_BUILD) --use-CXX=$(CXX) --use-c++=$(CXX) \
-	-enable-checker alpha \
-	-enable-checker security -enable-checker unix -enable-checker core \
-	-enable-checker cplusplus -enable-checker deadcode -enable-checker nullability \
-	-analyzer-config aggressive-binary-operation-simplification=true \
-	--status-bugs -v -V make
+	$(info Using scan-build: $(SCAN_BUILD))
+	@CC=$(CC) CXX=$(CXX) $(SCAN_BUILD) \
+		-enable-checker alpha \
+		-enable-checker security -enable-checker unix -enable-checker core \
+		-enable-checker cplusplus -enable-checker deadcode -enable-checker nullability \
+		-analyzer-config aggressive-binary-operation-simplification=true \
+		--status-bugs -v -V make
 	@echo "✅ Scan-build analysis complete"
 
 PHONY	+=	banner
