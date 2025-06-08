@@ -104,7 +104,7 @@ $(ODIR)%.o: $(SRCDIR)%.cpp | prepare build_info
 
 # Define a pattern rule that compiles every .cpp file into a .o file
 PHONY	+= build_info
-build_info: ## prints the build information
+build_info:
 	@echo "$(L_BLUE)  [info]:  $(L_MAGENTA)$(CXX) $(CFLAGS) $(CXXFLAGS)$(RESET)"
 
 PHONY	+= createSANITIZED
@@ -159,7 +159,7 @@ TIDY_EXTRA_ARGS =	--extra-arg=-std=c++98 \
 					--extra-arg=-Iincludes \
 					--extra-arg=-Wno-c++98-compat
 
-CLANG_TIDY = clang-tidy-19
+CLANG_TIDY = clang-tidy-20
 
 PHONY	+= tidy
 tidy: ## run clang-tidy on project 
