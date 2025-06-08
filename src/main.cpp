@@ -33,8 +33,8 @@ int main(const int ac, const char *const *av) {
 	
 	try {
 		std::cout << "Server started on port " << port << "\n";
-		const Server server(port, av[2]);
-		// server.run();
+		Server server(port, av[2]);
+		server.run();
 	} catch (const std::exception& e) {
 		std::cerr << "Error: " << e.what() << "\n";
 		return (1);
