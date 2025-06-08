@@ -42,18 +42,3 @@ int main(const int ac, const char *const *av) {
 	
 	return (0);
 }
-
-// return (ac != 3) ? (std::cerr << "Usage: " << av[0] << " <port> <password>\n", 1) :
-// 	(!validatePort(av[1], port)) ? 1 :
-// 	(!validatePassword(av[2])) ? 1 :
-// 	([&]() -> int {
-// 		try {
-// 			Server server(port, av[2]);
-// 			std::cout << "Server started on port " << port << "\n";
-// 			// server.run();
-// 			return 0;
-// 		} catch (const std::exception& e) {
-// 			std::cerr << "Error: " << e.what() << std::endl;
-// 			return 1;
-// 		}
-// 	})();
