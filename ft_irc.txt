@@ -40,7 +40,8 @@ Create your own **IRC server** in **C++98**. You'll use a real IRC client to tes
 ## 🔌 **Networking Functions Allowed**
 
 You can use:
-`socket`, `close`, `setsockopt`, `getaddrinfo`, `freeaddrinfo`, `bind`, `connect`, `listen`, `accept`, `htons`, `ntohs`, `send`, `recv`, `poll`, `signal`, `fcntl`, etc.
+Everything in C++ 98.
+`socket`, `close`, `setsockopt`, `getaddrinfo`, `freeaddrinfo`, `bind`, `connect`, `listen`, `accept`, `htons`, `ntohs`, `send`, `recv`, `signal`, `fcntl`, 'getsockname', 'getprotobyname', 'gethostbyname', 'htonl', 'ntohl', 'sigaction', 'lseek', 'fstat', `poll` (or equivalent).
 
 ---
 
