@@ -1,8 +1,9 @@
 # project based ignore files
-ft_irc.en.subject.pdf
+*.pdf
 .vscode
 Makefile.mk
 ircserv
+
 # Prerequisites
 *.d
 
