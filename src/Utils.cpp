@@ -77,21 +77,3 @@ bool validatePassword(const std::string& password) {
 	}
 	return (true);
 }
-
-
-// void logMessage(LogLevel level, std::initializer_list<std::string> messages) {
-//     // Choose prefix based on log level
-//     std::string prefix;
-//     switch (level) {
-//         case LogLevel::INFO:    prefix = "[INFO]\t";    break;
-//         case LogLevel::DEBUG:   prefix = "[DEBUG]\t";   break;
-//         case LogLevel::WARNING: prefix = "[WARNING]\t"; break;
-//         case LogLevel::ERROR:   prefix = "[ERROR]\t";   break;
-//     }
-
-//     std::cout << prefix;
-//     for (const auto& msg : messages) {
-//         std::cout << msg;
-//     }
-//     std::cout << "\n";
-// }
