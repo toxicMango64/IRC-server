@@ -56,6 +56,8 @@ void Server::run() {
 						client_poll.revents = 0;
 						fds.push_back(client_poll);
 						debugPrint("New client connected.");
+						const std::string welcome = ":ircserv 001 client :Welcome to ft_irc\r\n";
+						send(client_fd, welcome.c_str(), welcome.length(), 0);
 					}
 				} else {
 					int n = recv(fds[i].fd, buffer, sizeof(buffer) - 1, 0);
