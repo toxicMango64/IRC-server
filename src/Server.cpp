@@ -1,11 +1,10 @@
-#include "../inc/Server.hpp"
-#include "../inc/Utils.hpp"
+#include "Server.hpp"
 
 Server::Server(int port, const std::string& password) 
-	: port(port), password(password) {}
+	: _port(port), _password(password) {}
 
 bool Server::isValid() const {
-	return (port >= MIN_PORT && port <= MAX_PORT) && !password.empty();
+	return (_port >= MIN_PORT && _port <= MAX_PORT) && !_password.empty();
 }
 
 void Server::run() {
@@ -22,7 +21,7 @@ void Server::run() {
 	std::memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port = htons(this->port);
+	addr.sin_port = htons(this->_port);
 
 	if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
 		throw std::runtime_error("Bind failed");
@@ -55,6 +54,7 @@ void Server::run() {
 						client_poll.events = POLLIN;
 						client_poll.revents = 0;
 						fds.push_back(client_poll);
+                        connectedClients.insert(std::make_pair(client_fd, Client(client_fd)));
 						debugPrint("New client connected.");
 						const std::string welcome = ":ircserv 001 client :Welcome to ft_irc\r\n";
 						send(client_fd, welcome.c_str(), welcome.length(), 0);
@@ -64,10 +64,16 @@ void Server::run() {
 					if (n <= 0) {
 						close(fds[i].fd);
 						fds.erase(fds.begin() + i);
+                        connectedClients.erase(fds[i].fd);
 						--i;
 					} else {
+                        std::string output;
 						buffer[n] = '\0';
 						std::cout << ">> " << buffer;
+                        handleBuffer(connectedClients.at(fds[i].fd), buffer, output);
+                        if (!output.empty()){
+                            send(fds[i].fd, output.c_str(), output.length(), 0);
+                        }
 					}
 				}
 			}
