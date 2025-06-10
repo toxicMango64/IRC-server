@@ -25,12 +25,12 @@ int main(const int ac, const char *const *av) {
 		std::cerr << "Usage: " << av[0] << " <port> <password>\n";
 		return 1;
 	}
-	
+
 	int	port = 0;
 	if (!validatePort(av[1], port) || (!validatePassword(av[2]))) {
 		return (1);
 	}
-	
+
 	try {
 		std::cout << "Server started on port " << port << "\n";
 		Server server(port, av[2]);
@@ -39,6 +39,6 @@ int main(const int ac, const char *const *av) {
 		std::cerr << "Error: " << e.what() << "\n";
 		return (1);
 	}
-	
+
 	return (0);
 }
