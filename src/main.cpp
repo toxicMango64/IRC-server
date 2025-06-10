@@ -20,6 +20,7 @@
  * - Else: Initializes and runs server inside a lambda, returns 0 on success or 1 on exception.
  */
 int main(const int ac, const char *const *av) {
+
 	if (ac != 3) {
 		std::cerr << "Usage: " << av[0] << " <port> <password>\n";
 		return 1;
@@ -31,6 +32,7 @@ int main(const int ac, const char *const *av) {
 	}
 
 	try {
+		std::cout << "Server started on port " << port << "\n";
 		Server server(port, av[2]);
 		server.run();
 	} catch (const std::exception& e) {

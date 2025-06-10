@@ -1,3 +1,4 @@
+// Channel.hpp
 #pragma once
 
 #include <string>
