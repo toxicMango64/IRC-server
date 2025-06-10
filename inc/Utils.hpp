@@ -31,5 +31,5 @@ inline void debugPrint(const std::string& msg) {
 		std::cerr << "[DEBUG] " << msg << std::endl;
 }
 
-bool validatePort(const std::string& portStr, int& result);
-bool validatePassword(const std::string& password);
+bool validatePort( const std::string& portStr, int& result );
+bool validatePassword( const std::string& password );
