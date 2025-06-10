@@ -27,13 +27,13 @@ enum e_irc {
 };
 
 class Server {
-    public:
-        Server( int port, const std::string& password );
-        bool isValid( void ) const;
-    	void run( void );
-        std::map<int, Client> connectedClients;
-    
-    private:
-        int _port;
-    	std::string _password;
+	public:
+		Server( int port, const std::string& password );
+		bool isValid( void ) const;
+		void run( void );
+		std::map<int, Client> connectedClients;
+	
+	private:
+		int _port;
+		std::string _password;
 };
