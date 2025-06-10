@@ -1,4 +1,4 @@
-// server.hpp
+// Server.hpp
 #pragma once
 
 #include <arpa/inet.h>
@@ -25,6 +25,7 @@ enum e_irc {
 	MAX_PORT = 65535,
 	MAX_INT_INDEX = 10
 };
+class Client;
 
 class Server {
 	public:

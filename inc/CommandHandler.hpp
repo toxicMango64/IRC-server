@@ -1,3 +1,4 @@
+// CommandHandler.hpp
 #pragma once
 
 #include "Client.hpp"
@@ -17,6 +18,8 @@ void    handleNick();
 void    handleUser();
 void    handleJoin();
 void    handlePart();
+
+class Client;
 
 /** 
  * General buffer handler which calls the appropriate
