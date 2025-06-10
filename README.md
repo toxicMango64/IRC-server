@@ -13,7 +13,7 @@ A simple **Internet Relay Chat (IRC)** client implemented in **C++98**. The goal
 > ./ircserv <PORT> > <yourpassword>
 > ```
 > ```bash
-> ./irc_test.sh <localhost/127.0.0.1> <PORT> > <yourpassword>
+> ./irc_test.sh <PORT> > <yourpassword>
 > ```
 
 
