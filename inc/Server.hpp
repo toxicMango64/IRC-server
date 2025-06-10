@@ -1,19 +1,23 @@
 // Server.hpp
 #pragma once
 
-# include "Utils.hpp"
-# include <string>
-# include <iostream>
-# include <stdexcept>
-# include <stdint.h>
-# include <vector>
-# include <poll.h>
-# include <fcntl.h>
-# include <unistd.h>
-# include <netinet/in.h>
-# include <sys/socket.h>
-# include <arpa/inet.h>
-# include <cstring>
+#include <arpa/inet.h>
+#include <cstring>
+#include <fcntl.h>
+#include <iostream>
+#include <map>
+#include <netinet/in.h>
+#include <poll.h>
+#include <string>
+#include <stdexcept>
+#include <stdint.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <vector>
+
+#include "CommandHandler.hpp"
+#include "Client.hpp"
+#include "Utils.hpp"
 
 // enum class e_irc : std::uint16_t {
 enum e_irc {
@@ -23,12 +27,13 @@ enum e_irc {
 };
 
 class Server {
-private:
-	int port;
-	std::string password;
-
-public:
-	Server(int port, const std::string& password);
-	bool isValid() const;
-	void run();
+	public:
+		Server( int port, const std::string& password );
+		bool isValid( void ) const;
+		void run( void );
+		std::map<int, Client> connectedClients;
+	
+	private:
+		int _port;
+		std::string _password;
 };
