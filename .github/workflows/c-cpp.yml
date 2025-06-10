@@ -18,8 +18,8 @@ jobs:
 
             - name: Set up C++ environment
               run: |
-                  sudo apt update
-                  sudo apt install -y g++ make cppcheck lcov doxygen cppcheck
+                  sudo apt-get update
+                  sudo apt-get install -y g++ make cppcheck lcov doxygen
 
             # - name: Install Dependencies
             #   run: |
@@ -32,8 +32,7 @@ jobs:
             #   run: cppcheck --enable=all --inconclusive .
 
             - name: Build the project
-              run: \
-                make CXXFLAGS="-Wall -Wextra -Werror -std=c++98"
+              run: make CXXFLAGS="-Wall -Wextra -Werror -std=c++98"
 
             # - name: Run unit tests
             #   run: ./path/to/your/test/executable # Replace with the path to your test executable
