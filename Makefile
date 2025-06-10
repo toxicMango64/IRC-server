@@ -21,10 +21,11 @@ OBJ := $(patsubst %.cpp, $(ODIR)%.o, $(notdir $(SRC)))
 
 # ------------------------------ Compilation Flags --------------------------- #
 
-CFLAGS      += -Wall -Wextra -Werror -I$(INC) -std=c++98
-SANITIZE    := -fsanitize=address
-LDFLAGS     :=
-CPPFLAGS    :=
+CXXFLAGS	+= -Wall -Wextra -Werror -I$(INC) -std=c++98
+SANITIZE	:= -fsanitize=address
+LDFLAGS		:=
+CFLAGS		:=
+DEBUGFLAGS	:=
 
 # ------------------------------- Variables ---------------------------------- #
 
@@ -37,15 +38,15 @@ SHIFT  = $(eval O=$(shell echo $$((($(O)%15)+1))))
 
 UNAME := $(shell uname -s)
 NUMPROC :=
-CC :=
+CXX :=
 
 # CPU core detection
 ifeq ($(UNAME), Darwin)
-    CC := c++
+    CXX := c++
     NUMPROC := $(shell sysctl -n hw.ncpu)
 else ifeq ($(UNAME), Linux) # Detect best available compiler
-	CC := $(shell \
-		for bin in clang++-19 clang++-18 clang++-17 clang++ g++-13 g++-12 g++ ; do \
+	CXX := $(shell \
+		for bin in clang++-20 clang++-19 clang++-18 clang++-17 clang++ g++-13 g++-12 g++ ; do \
 			if command -v $$bin >/dev/null 2>&1; then echo $$bin; break; fi; \
 		done \
 	)
@@ -55,18 +56,19 @@ else
 endif
 
 # Optional: Display detected compiler
-COMPILER_VERSION := $(shell $(CC) --version | head -n 1)
-# $(info [INFO] Compiler: $(CC))
+COMPILER_VERSION := $(shell $(CXX) --version | head -n 1)
+# $(info [INFO] Compiler: $(CXX))
 # $(info [INFO] Version : $(COMPILER_VERSION))
 # $(info [INFO] CPU Cores: $(NUMPROC))
 
 # ------------------------------ Build Mode Logic ---------------------------- #
 
-mode ?=
+MODE ?=
 SANITIZED_EXISTS := $(shell [ -f $(SANITIZED_FLAG) ] && echo 1)
 
-ifeq ($(mode), debug)
-    CFLAGS += -g3 $(SANITIZE)
+PHONY	:= all
+ifeq ($(MODE), debug)
+    DEBUGFLAGS += -g3 $(SANITIZE)
     ifeq ($(SANITIZED_EXISTS), 1)
         all: build_info $(NAME) info
     else
@@ -80,24 +82,36 @@ else
     endif
 endif
 
-# ------------------------------ Targets ------------------------------------- #
+PHONY	+= build
+build:
+	@echo "$(L_BLUE)  [info]:  $(L_GREEN)Starting parallel build using '$(NUMPROC)'' threads...$(RESET)"
+	@$(MAKE) -s -j$(NUMPROC)
 
+# --------------------------- Targets & Rules --------------------------------- #
+
+CXXFLAGS += $(DEBUGFLAGS)
 $(NAME): $(OBJ)
-	@$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(OBJ) -o $(NAME)
+	@$(CXX) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $(NAME)
 
-$(ODIR)%.o: $(SRCDIR)%.cpp | build_info
+PHONY	+= prepare
+prepare:
+	@mkdir -p $(ODIR)
+
+$(ODIR)%.o: $(SRCDIR)%.cpp | prepare build_info
 	@mkdir -p $(dir $@)
-	@printf "$(L_BLUE)[compiling]: $(L_GREEN)%-30s -> $(L_BLUE)%s$(RESET)\n" "$<" "$@"
-	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+	@printf "$(L_BLUE)  [info]:  $(L_GREEN)%-30s -> $(L_BLUE)%s$(RESET)\n" "$<" "$@"
+	@$(CXX) -c $(CFLAGS) $(CXXFLAGS) $< -o $@
 
 # Define a pattern rule that compiles every .cpp file into a .o file
 PHONY	+= build_info
-build_info: ## prints the build information
-	@echo "$(L_CYAN)[compiler]: $(L_MAGENTA)$(CC) $(CFLAGS) $(CPPFLAGS)$(RESET)"
+build_info:
+	@echo "$(L_BLUE)  [info]:  $(L_MAGENTA)$(CXX) $(CFLAGS) $(CXXFLAGS)$(RESET)"
 
+PHONY	+= createSANITIZED
 createSANITIZED:
 	@touch $(SANITIZED_FLAG)
 
+PHONY	+= removeSANITIZED
 removeSANITIZED:
 	@$(RM) $(SANITIZED_FLAG)
 
@@ -112,31 +126,100 @@ fclean: clean removeSANITIZED ## uses the rule clean and removes the obsolete fi
 PHONY	+= re
 re: fclean all ## does fclean and all
 
+TIDY_FLAGS =	'clang-analyzer-*,\
+				bugprone-*,\
+				performance-*,\
+				misc-const-correctness,\
+				misc-misplaced-const,\
+				cppcoreguidelines-avoid-const-or-ref-data-members,\
+				readability-avoid-const-params-in-decls,\
+				readability-const-return-type,\
+				readability-make-member-function-const,\
+				llvm-include-order,\
+				cppcoreguidelines-init-variables,\
+				llvmlibc-inline-function-decl,\
+				hicpp-braces-around-statements,\
+				readability-braces-around-statements,\
+				google-runtime-int,\
+				readability-implicit-bool-conversion,\
+				readability-isolate-declaration,\
+				readability-redundant-string-init,\
+				cppcoreguidelines-special-member-functions,\
+				hicpp-special-member-functions,\
+				readability-convert-member-functions-to-static,\
+				google-explicit-constructor,\
+				hicpp-explicit-conversions,\
+				hicpp-signed-bitwise,\
+				hicpp-deprecated-headers,\
+				modernize-deprecated-headers,\
+				misc-use-anonymous-namespace,\
+				misc-definitions-in-headers'
+
+TIDY_EXTRA_ARGS =	--extra-arg=-std=c++98 \
+					--extra-arg=-Iincludes \
+					--extra-arg=-Wno-c++98-compat
+
+CLANG_TIDY = clang-tidy-20
+
+PHONY	+= tidy
+tidy: ## run clang-tidy on project 
+	@$(CLANG_TIDY) $(SRC) \
+	--checks=$(TIDY_FLAGS) \
+	$(TIDY_EXTRA_ARGS) \
+	--header-filter='includes/.*' \
+	--system-headers=false \
+	--quiet \
+	-- $(CXXFLAGS) $(INCLUDES)
+	@echo "✅ check complete"
+
+
+# DETECTED_SCAN_BUILD := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v scan-build-$(v) >/dev/null 2>&1 && echo scan-build-$(v)),scan-build-$(v))))
+# Try to find the newest scan-build from version 21 down to 15
+# If none are found in that range, default to scan-build-20 (original value)
+PHONY += scan
+
+SCAN_BUILD := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v scan-build-$(v)),scan-build-$(v))))
+ifeq ($(SCAN_BUILD),)
+SCAN_BUILD := scan-build-20
+endif
+
+scan: fclean ## Scan-build static analysis
+	@echo "🔍 Running scan-build..."
+	$(info Using scan-build: $(SCAN_BUILD))
+	@CC=$(CC) CXX=$(CXX) $(SCAN_BUILD) \
+		-enable-checker alpha \
+		-enable-checker security -enable-checker unix -enable-checker core \
+		-enable-checker cplusplus -enable-checker deadcode -enable-checker nullability \
+		-analyzer-config aggressive-binary-operation-simplification=true \
+		--status-bugs -v -V make
+	@echo "✅ Scan-build analysis complete"
+
 PHONY	+=	banner
 SHIFT	=	$(eval O=$(shell echo $$((($(O)%15)+1))))
 banner: ## prints the ircserv banner for the makefile
-	@echo "$(C)$(O)$(L)+----------------------------------------+$(RESET)"
-	@echo "$(C)$(O)$(L)|  _                                     |";
+	@echo " $(C)$(O)$(L)+----------------------------------------+$(RESET)"
+	@echo " $(C)$(O)$(L)|  _                                     |";
 	$(SHIFT)
-	@echo "$(C)$(O)$(L)| (_) _ __  ___  ___   ___  _ __ __   __ |";
-	@echo "$(C)$(O)$(L)| | || '__|/ __|/ __| / _ \| '__|\ \ / / |";
+	@echo " $(C)$(O)$(L)| (_) _ __  ___  ___   ___  _ __ __   __ |";
+	@echo " $(C)$(O)$(L)| | || '__|/ __|/ __| / _ \| '__|\ \ / / |";
 	$(SHIFT)
-	@echo "$(C)$(O)$(L)| | || |  | (__ \__ \|  __/| |    \ V /  |";
-	@echo "$(C)$(O)$(L)| |_||_|   \___||___/ \___||_|     \_/   |";
-	@echo "$(C)$(O)$(L)+----------------------------------------+$(RESET)"
+	@echo " $(C)$(O)$(L)| | || |  | (__ \__ \|  __/| |    \ V /  |";
+	@echo " $(C)$(O)$(L)| |_||_|   \___||___/ \___||_|     \_/   |";
+	@echo " $(C)$(O)$(L)+----------------------------------------+$(RESET)"
 
 PHONY	+= info
 info: ## prints project based info
 	@echo "$(L_CYAN)# ------------------------- Build Info -------------------------- #$(RESET)"
-	@echo "$(L_GREEN)NAME       $(RESET): $(L_MAGENTA)$(NAME)$(RESET)"
-	@echo "$(L_GREEN)UNAME      $(RESET): $(L_MAGENTA)$(UNAME)$(RESET)"
-	@echo "$(L_GREEN)NUMPROC    $(RESET): $(L_MAGENTA)$(NUMPROC)$(RESET)"
-	@echo "$(L_GREEN)CC         $(RESET): $(L_MAGENTA)$(COMPILER_VERSION)$(RESET)"
-	@echo "$(L_GREEN)CFLAGS     $(RESET): $(L_MAGENTA)$(CFLAGS)$(RESET)"
-	@echo "$(L_GREEN)LDFLAGS    $(RESET): $(L_MAGENTA)$(LDFLAGS)$(RESET)"
-	@echo "$(L_GREEN)CPPFLAGS   $(RESET): $(L_MAGENTA)$(CPPFLAGS)$(RESET)"
-	@echo "$(L_GREEN)BUILD MODE $(RESET): $(L_MAGENTA)$(mode)$(RESET)"
-	@echo "$(L_GREEN)SRC        $(RESET):"
+	@echo "$(L_GREEN)NAME        $(RESET): $(L_MAGENTA)$(NAME)$(RESET)"
+	@echo "$(L_GREEN)UNAME       $(RESET): $(L_MAGENTA)$(UNAME)$(RESET)"
+	@echo "$(L_GREEN)NUMPROC     $(RESET): $(L_MAGENTA)$(NUMPROC)$(RESET)"
+	@echo "$(L_GREEN)CC          $(RESET): $(L_MAGENTA)$(COMPILER_VERSION)$(RESET)"
+	@echo "$(L_GREEN)CXXFLAGS    $(RESET): $(L_MAGENTA)$(CXXFLAGS)$(RESET)"
+	@echo "$(L_GREEN)LDFLAGS     $(RESET): $(L_MAGENTA)$(LDFLAGS)$(RESET)"
+	@echo "$(L_GREEN)CFLAGS      $(RESET): $(L_MAGENTA)$(CFLAGS)$(RESET)"
+	@echo "$(L_GREEN)DEBUGFLAGS  $(RESET): $(L_MAGENTA)$(DEBUGFLAGS)$(RESET)"
+	@echo "$(L_GREEN)BUILD MODE  $(RESET): $(L_MAGENTA)$(MODE)$(RESET)"
+	@echo "$(L_GREEN)SRC         $(RESET):"
 	@echo "$(L_BLUE)$(SRC)$(RESET)"
 	@echo "$(L_CYAN)# --------------------------------------------------------------- #$(RESET)"
 
@@ -150,7 +233,7 @@ help: ## prints a list of the possible commands
 	@echo "$(L_CYAN)# --------------------------------------------------------------- #$(RESET)"
 
 .DEFAULT:
-	@echo "${L_RED}[Error]${RESET}: ${L_BLUE}\tUnknown target '${L_RED}$@${L_BLUE}'.${RESET}"
+	@echo >&2 "${L_RED}[Error]${RESET}: ${L_BLUE}\tUnknown target '${L_RED}$@${L_BLUE}'.${RESET}"
 	@${MAKE} -s help
 
 # ----------------------------- Phony Targets -------------------------------- #
@@ -182,20 +265,3 @@ L_MAGENTA  := \033[0;95m
 C          := \033[38;5;
 O          := 72
 L          := m
-
-# /irc_server_project
-# ├── Makefile
-# ├── include/
-# │   ├── Server.hpp
-# │   ├── Client.hpp
-# │   ├── Channel.hpp
-# │   ├── CommandHandler.hpp
-# │   └── Utils.hpp
-# ├── src/
-# │   ├── main.cpp
-# │   ├── Server.cpp
-# │   ├── Client.cpp
-# │   ├── Channel.cpp
-# │   ├── CommandHandler.cpp
-# │   └── Utils.cpp
-# └── README.md

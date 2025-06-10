@@ -24,8 +24,8 @@ int main(const int ac, const char *const *av) {
 		std::cerr << "Usage: " << av[0] << " <port> <password>\n";
 		return 1;
 	}
-
-	int port;
+	
+	int	port = 0;
 	if (!validatePort(av[1], port) || (!validatePassword(av[2]))) {
 		return (1);
 	}

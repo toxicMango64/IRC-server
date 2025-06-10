@@ -1,3 +1,9 @@
+# project based ignore files
+*.pdf
+.vscode
+Makefile.mk
+ircserv
+
 # Prerequisites
 *.d
 
@@ -31,8 +37,3 @@ obj/
 *.exe
 *.out
 *.app
-ft_irc.en.subject.pdf
-.vscode
-
-ircserv
-
