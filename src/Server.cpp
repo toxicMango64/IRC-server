@@ -8,12 +8,12 @@ bool Server::isValid() const {
 }
 
 void Server::run() {
-	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (server_fd < 0)
+	int sFd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sFd < 0)
 		throw std::runtime_error("Failed to create socket");
 
 	// Make server socket non-blocking
-	if (fcntl(server_fd, F_SETFL, fcntl(server_fd, F_GETFL) | O_NONBLOCK) < 0)
+	if (fcntl(sFd, F_SETFL, fcntl(sFd, F_GETFL) | O_NONBLOCK) < 0)
 		throw std::runtime_error("Failed to set non-blocking");
 
 	// Bind server socket
@@ -23,15 +23,16 @@ void Server::run() {
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port = htons(this->_port);
 
-	if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+	const struct sockaddr *sockAddr = reinterpret_cast<struct sockaddr*>(&addr);
+	if (bind(sFd, sockAddr, sizeof(addr)) < 0)
 		throw std::runtime_error("Bind failed");
 
-	if (listen(server_fd, SOMAXCONN) < 0)
+	if (listen(sFd, SOMAXCONN) < 0)
 		throw std::runtime_error("Listen failed");
 
 	std::vector<pollfd> fds;
 	pollfd server_poll;
-	server_poll.fd = server_fd;
+	server_poll.fd = sFd;
 	server_poll.events = POLLIN;
 	server_poll.revents = 0;
 	fds.push_back(server_poll);
@@ -45,8 +46,8 @@ void Server::run() {
 
 		for (size_t i = 0; i < fds.size(); ++i) {
 			if (fds[i].revents & POLLIN) {
-				if (fds[i].fd == server_fd) {
-					int client_fd = accept(server_fd, NULL, NULL);
+				if (fds[i].fd == sFd) {
+					int client_fd = accept(sFd, NULL, NULL);
 					if (client_fd > 0) {
 						fcntl(client_fd, F_SETFL, fcntl(client_fd, F_GETFL) | O_NONBLOCK);
 						pollfd client_poll;
