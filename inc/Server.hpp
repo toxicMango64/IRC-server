@@ -1,4 +1,4 @@
-// Server.hpp
+// server.hpp
 #pragma once
 
 #include <arpa/inet.h>

@@ -1,4 +1,3 @@
-// CommandHandler.hpp
 #pragma once
 
 #include "Client.hpp"

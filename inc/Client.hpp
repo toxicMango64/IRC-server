@@ -1,4 +1,3 @@
-// Client.hpp
 #pragma once
 
 #include <string>
