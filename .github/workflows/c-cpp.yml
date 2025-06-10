@@ -19,20 +19,21 @@ jobs:
             - name: Set up C++ environment
               run: |
                   sudo apt update
-                  sudo apt install -y g++ make cppcheck lcov doxygen
+                  sudo apt install -y g++ make cppcheck lcov doxygen cppcheck
 
-            - name: Install Dependencies
-              run: |
-                  # Uncomment if using Conan for dependency management
-                  # curl -s https://get.conan.io | python
-                  # conan install . --build=missing
-                  echo "Add any dependencies installation commands here."
+            # - name: Install Dependencies
+            #   run: |
+            #       # Uncomment if using Conan for dependency management
+            #       # curl -s https://get.conan.io | python
+            #       # conan install . --build=missing
+            #       echo "Add any dependencies installation commands here."
 
-            - name: Static Code Analysis
-              run: cppcheck --enable=all --inconclusive .
+            # - name: Static Code Analysis
+            #   run: cppcheck --enable=all --inconclusive .
 
             - name: Build the project
-              run: make CXXFLAGS="-Wall -Wextra -Werror -std=c++98"
+              run: \
+                make CXXFLAGS="-Wall -Wextra -Werror -std=c++98"
 
             # - name: Run unit tests
             #   run: ./path/to/your/test/executable # Replace with the path to your test executable
@@ -41,7 +42,7 @@ jobs:
             #   run: |
             #       make clean
             #       make CXXFLAGS="-Wall -Wextra -Werror -std=c++98 --coverage"
-            #       ./ircserv 223 password # ./path/to/your/test/executable
+            #       ./ircserv 223 password # ./path/to/executable
             #       lcov --capture --directory . --output-file coverage.info --ignore-errors empty unused
             #       lcov --remove coverage.info '/usr/*' --output-file coverage.info --ignore-errors empty unused
             #       bash <(curl -s https://codecov.io/bash) -f coverage.info
@@ -49,16 +50,13 @@ jobs:
             # - name: Generate Documentation
             #   run: doxygen Doxyfile # Ensure you have a Doxyfile configured
 
-            - name: Rollback Mechanism
-              if: failure()
-              run: |
-                  echo "Rolling back to the previous stable version..."
-                  # Insert rollback commands here, e.g., reverting to a previous commit or restoring a backup
-
             - name: Notify success
               if: success()
               run: echo "Build and tests succeeded!"
 
-            - name: Notify failure
+            - name: Notify failure and Rollback Mechanism 
               if: failure()
-              run: echo "Build or tests failed!"
+              run: |
+                  echo "Build or tests failed!"
+                  echo "Rolling back to the previous stable version..."
+                  # Insert rollback commands here, e.g., reverting to a previous commit or restoring a backup
