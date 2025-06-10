@@ -1,4 +1,4 @@
-#include "CommandHandler.hpp"
+#include "../inc/CommandHandler.hpp"
 
 Commands    getCmd(const char buf[512]) {
     std::string command(buf);
