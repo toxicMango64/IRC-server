@@ -1,13 +1,16 @@
 // server.hpp
 #pragma once
 
-#include <exception>
+#include <arpa/inet.h>
+#include <cstring>
+#include <fcntl.h>
 #include <iostream>
 #include <map>
 #include <netinet/in.h>
 #include <poll.h>
-#include <stdexcept>
 #include <string>
+#include <stdexcept>
+#include <stdint.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
@@ -30,25 +33,6 @@ class Server {
     	void run( void );
         std::map<int, Client> connectedClients;
     
-    // Exception classes
-    public:
-        class SocketCreationException: public std::exception {
-            public:
-                virtual const char* what() const throw();
-        };
-        class SocketBindingException: public std::exception {
-            public:
-                virtual const char* what() const throw();
-        };
-        class SocketListeningException: public std::exception {
-            public:
-                virtual const char* what() const throw();
-        };
-        class PollException: public std::exception {
-            public:
-                virtual const char* what() const throw();
-        };
-
     private:
         int _port;
     	std::string _password;
