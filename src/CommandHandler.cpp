@@ -1,19 +1,20 @@
 #include "../inc/CommandHandler.hpp"
 
 Commands    getCmd(const char buf[512]) {
-    std::string command(buf);
-    std::string command_prefix = command.substr(0, 4);
+    const std::string command(buf);
+    const std::string command_prefix = command.substr(0, 4);
 
-    if (command_prefix == "pass")
+    if (command_prefix == "pass") {
         return (PASS);
-    else if (command_prefix == "user")
+    } else if (command_prefix == "user") {
         return (USER);
-    else if (command_prefix == "nick")
+    } else if (command_prefix == "nick") {
         return (NICK);
-    else if (command_prefix == "join")
+    } else if (command_prefix == "join") {
         return (JOIN);
-    else if (command_prefix == "part")
+    } else if (command_prefix == "part") {
         return (PART);
+    }
     return (INVALID);
 }
 
