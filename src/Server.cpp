@@ -8,13 +8,15 @@ bool Server::isValid() const {
 }
 
 void Server::run() {
-	int sFd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sFd < 0)
+	const int sFd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sFd < 0) {
 		throw std::runtime_error("Failed to create socket");
+	}
 
 	// Make server socket non-blocking
-	if (fcntl(sFd, F_SETFL, fcntl(sFd, F_GETFL) | O_NONBLOCK) < 0)
+	if (fcntl(sFd, F_SETFL, static_cast<uint64_t>(fcntl(sFd, F_GETFL)) | static_cast<uint64_t>(O_NONBLOCK)) < 0) {
 		throw std::runtime_error("Failed to set non-blocking");
+	}
 
 	// Bind server socket
 	struct sockaddr_in addr;
@@ -24,11 +26,13 @@ void Server::run() {
 	addr.sin_port = htons(this->_port);
 
 	const struct sockaddr *sockAddr = reinterpret_cast<struct sockaddr*>(&addr);
-	if (bind(sFd, sockAddr, sizeof(addr)) < 0)
+	if (bind(sFd, sockAddr, sizeof(addr)) < 0) {
 		throw std::runtime_error("Bind failed");
+	}
 
-	if (listen(sFd, SOMAXCONN) < 0)
+	if (listen(sFd, SOMAXCONN) < 0) {
 		throw std::runtime_error("Listen failed");
+	}
 
 	std::vector<pollfd> fds;
 	pollfd server_poll;
@@ -40,16 +44,17 @@ void Server::run() {
 	char buffer[512];
 
 	while (true) {
-		int poll_count = poll(&fds[0], fds.size(), -1);
-		if (poll_count < 0)
+		const int poll_count = poll(&fds[0], fds.size(), -1);
+		if (poll_count < 0) {
 			throw std::runtime_error("Poll failed");
+		}
 
 		for (size_t i = 0; i < fds.size(); ++i) {
-			if (fds[i].revents & POLLIN) {
+			if ((static_cast<unsigned int>(fds[i].revents) & static_cast<unsigned int>(POLLIN)) != 0) {
 				if (fds[i].fd == sFd) {
-					int client_fd = accept(sFd, NULL, NULL);
+					const int client_fd = accept(sFd, NULL, NULL);
 					if (client_fd > 0) {
-						fcntl(client_fd, F_SETFL, fcntl(client_fd, F_GETFL) | O_NONBLOCK);
+						fcntl(client_fd, F_SETFL, static_cast<uint64_t>(fcntl(client_fd, F_GETFL)) | static_cast<uint64_t>(O_NONBLOCK));
 						pollfd client_poll;
 						client_poll.fd = client_fd;
 						client_poll.events = POLLIN;
@@ -61,10 +66,10 @@ void Server::run() {
 						send(client_fd, welcome.c_str(), welcome.length(), 0);
 					}
 				} else {
-					int n = recv(fds[i].fd, buffer, sizeof(buffer) - 1, 0);
+					const int n = static_cast<int>(recv(fds[i].fd, buffer, sizeof(buffer) - 1, 0));
 					if (n <= 0) {
 						close(fds[i].fd);
-						fds.erase(fds.begin() + i);
+						fds.erase(fds.begin() + static_cast<int64_t>(i));
                         connectedClients.erase(fds[i].fd);
 						--i;
 					} else {
