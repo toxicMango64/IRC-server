@@ -22,7 +22,8 @@ void Server::setNonBlocking(int fd) {
 }
 
 void Server::bindSocket(int sFd) {
-    sockaddr_in addr{};
+    sockaddr_in addr;
+    std::memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port = htons(this->_port);
@@ -42,7 +43,10 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
     int client_fd = accept(sFd, NULL, NULL);
     if (client_fd > 0) {
         setNonBlocking(client_fd);
-        pollfd client_poll{client_fd, POLLIN, 0};
+        pollfd client_poll;
+		client_poll.fd = client_fd;
+		client_poll.events = POLLIN;
+		client_poll.revents = 0;
         fds.push_back(client_poll);
         connectedClients.insert(std::make_pair(client_fd, Client(client_fd)));
         debugPrint("New client connected.");
@@ -76,7 +80,11 @@ void Server::run() {
     startListening(sFd);
 
     std::vector<pollfd> fds;
-    fds.push_back({sFd, POLLIN, 0});
+	pollfd server_poll;
+	server_poll.fd = sFd;
+	server_poll.events = POLLIN;
+	server_poll.revents = 0;
+    fds.push_back(server_poll);
     char buffer[512];
 
     while (true) {
