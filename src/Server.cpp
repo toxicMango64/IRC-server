@@ -66,7 +66,7 @@ void Server::handleClientMessage(size_t i, std::vector<pollfd>& fds, char* buffe
         buffer[n] = '\0';
         std::string output;
         std::cout << ">> " << buffer;
-        handleBuffer(connectedClients.at(fd), buffer, output);
+        handleBuffer(connectedClients.at(fd), buffer, this->getPassword(), output);
         if (!output.empty()) {
             send(fd, output.c_str(), output.length(), 0);
         }
@@ -87,7 +87,9 @@ void Server::run() {
     fds.push_back(server_poll);
     char buffer[512];
 
+    std::cout << "Server started on port " << _port << "\n";
     while (true) {
+
         if (poll(&fds[0], fds.size(), -1) < 0) {
             throw std::runtime_error("Poll failed");
         }
