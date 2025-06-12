@@ -40,6 +40,8 @@ class Server {
 		void	startListening(int sFd);
 		void	handleNewConnection(int sFd, std::vector<pollfd>& fds);
 
+		const std::string& getPassword() const { return _password; }
+
 	private:
 		int _port;
 		std::string _password;
