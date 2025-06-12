@@ -30,11 +30,20 @@ class Client;
 class Server {
 	public:
 		Server( int port, const std::string& password );
-		bool isValid( void ) const;
-		void run( void );
-		std::map<int, Client> connectedClients;
-	
+		void	handleClientMessage(size_t i, std::vector<pollfd>& fds, char* buffer);
+		
+		bool	isValid( void ) const;
+		void	run( void );
+		int		createSocket();
+		void	setNonBlocking(int fd);
+		void	bindSocket(int sFd);
+		void	startListening(int sFd);
+		void	handleNewConnection(int sFd, std::vector<pollfd>& fds);
+
+		const std::string& getPassword() const { return _password; }
+
 	private:
 		int _port;
 		std::string _password;
+		std::map<int, Client> connectedClients;
 };

@@ -117,7 +117,7 @@ removeSANITIZED:
 
 PHONY	+= clean
 clean: ## cleans all the obj files
-	@$(RM) $(ODIR)/*.o
+	@$(RM) $(ODIR)*.o
 
 PHONY	+= fclean
 fclean: clean removeSANITIZED ## uses the rule clean and removes the obsolete files
@@ -191,7 +191,7 @@ scan: fclean ## Scan-build static analysis
 		-enable-checker security -enable-checker unix -enable-checker core \
 		-enable-checker cplusplus -enable-checker deadcode -enable-checker nullability \
 		-analyzer-config aggressive-binary-operation-simplification=true \
-		--status-bugs -v -V make
+		--status-bugs -v make
 	@echo "✅ Scan-build analysis complete"
 
 PHONY	+=	banner

@@ -7,7 +7,7 @@ DELAY=1  # Delay between commands (seconds)
 TIMEOUT=5 # Timeout for each nc session in seconds
 
 if [ -z "$HOST" ] || [ -z "$PORT" ] || [ -z "$PASS" ]; then
-  echo "Usage: $0 <host> <port> <password>"
+  echo "Usage: $0 <port> <password>"
   exit 1
 fi
 
