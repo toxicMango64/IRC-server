@@ -4,7 +4,8 @@ Commands    getCmd(const char buf[512]) {
     std::string command(buf);
     if (command[0] == '/')
         command = command.substr(1);
-    const std::string command_prefix = command.substr(0, 4);
+    std::string command_prefix = command.substr(0, 4);
+    std::transform(command_prefix.begin(), command_prefix.end(), command_prefix.begin(), ::toupper);
 
     if (command_prefix == "PASS") {
         return (PASS);
