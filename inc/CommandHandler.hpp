@@ -10,6 +10,7 @@ enum Commands {
     USER,
     JOIN,
     PART,
+    PRIVMSG,
     INVALID,
 };
 
@@ -25,4 +26,4 @@ class Client;
  * General buffer handler which calls the appropriate
  * functions based on the buffer (user input)
  */
-void    handleBuffer( Client& client, const char buf[512], std::string& output );
+void    handleBuffer( Client& client, const char buf[512], const std::string& password, std::string& output );
