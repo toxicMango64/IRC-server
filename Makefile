@@ -191,7 +191,7 @@ scan: fclean ## Scan-build static analysis
 		-enable-checker security -enable-checker unix -enable-checker core \
 		-enable-checker cplusplus -enable-checker deadcode -enable-checker nullability \
 		-analyzer-config aggressive-binary-operation-simplification=true \
-		--status-bugs -v make
+		-v make
 	@echo "✅ Scan-build analysis complete"
 
 PHONY	+=	banner
