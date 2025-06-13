@@ -1,23 +1,24 @@
 // Server.hpp
 #pragma once
 
+#include <stdexcept>
+#include <stdint.h>
+#include <iostream>
+#include "Utils.hpp"
+
 #include <arpa/inet.h>
 #include <cstring>
 #include <fcntl.h>
-#include <iostream>
 #include <map>
 #include <netinet/in.h>
 #include <poll.h>
 #include <string>
-#include <stdexcept>
-#include <stdint.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
 
 #include "CommandHandler.hpp"
 #include "Client.hpp"
-#include "Utils.hpp"
 
 // enum class e_irc : std::uint16_t {
 enum e_irc {
@@ -39,13 +40,14 @@ class Server {
 		void	handleClientMessage(size_t i, std::vector<pollfd>& fds, char* buffer);
 		
 		bool	isValid( void ) const;
-		void	run( void );
-		int		createSocket();
-		void	setNonBlocking(int fd);
-		void	bindSocket(int sFd);
-		void	startListening(int sFd);
-		void	handleNewConnection(int sFd, std::vector<pollfd>& fds);
+		void	run( int sFd );
+		int		createSocket( void );
+		void	setNonBlocking( int fd );
+		void	bindSocket( int sFd );
+		void	startListening( int sFd );
+		void	handleNewConnection( int sFd, std::vector<pollfd>& fds );
 
+		const int& getPort() const { return _port; }
 		const std::string& getPassword() const { return _password; }
 
 	private:
