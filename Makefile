@@ -7,9 +7,9 @@
 NAME        := ircserv
 SRCDIR      := src/
 ODIR        := obj/
-INC         := ./inc
 SANITIZED_FLAG := .sanitized
 
+INC         := ./inc
 SRC := $(SRCDIR)main.cpp \
        $(SRCDIR)Client.cpp \
        $(SRCDIR)CommandHandler.cpp \
