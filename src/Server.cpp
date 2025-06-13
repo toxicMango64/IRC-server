@@ -85,7 +85,7 @@ void Server::run() {
 	server_poll.events = POLLIN;
 	server_poll.revents = 0;
     fds.push_back(server_poll);
-    char buffer[512];
+    char buffer[MAX_BUF];
 
     std::cout << "Server started on port " << _port << "\n";
     while (true) {

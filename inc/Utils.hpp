@@ -28,7 +28,7 @@
 
 inline void debugPrint(const std::string& msg) {
 	if (DEBUG_MODE)
-		std::cerr << "[DEBUG] " << msg << std::endl;
+		std::cerr << "[DEBUG] " << msg << "\n";
 }
 
 bool validatePort( const std::string& portStr, int& result );

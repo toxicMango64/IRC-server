@@ -25,10 +25,16 @@ enum e_irc {
 	MAX_PORT = 65535,
 	MAX_INT_INDEX = 10
 };
+
+#include <stdio.h>
+
+#define welcome(server) printf("welcome to {%s}, hope you enjoy your time here\n", server);
+
 class Client;
 
 class Server {
 	public:
+		static const int MAX_BUF = 512;
 		Server( int port, const std::string& password );
 		void	handleClientMessage(size_t i, std::vector<pollfd>& fds, char* buffer);
 		

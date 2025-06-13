@@ -1,6 +1,37 @@
 #include "../inc/CommandHandler.hpp"
 
-Commands    getCmd(const char buf[512]) {
+// Commands getCmd(const char buf[MAX_BUF]) {
+//     if (!buf || std::strlen(buf) == 0) {
+//         return INVALID;
+//     }
+
+//     std::string command(buf);
+
+//     if (!command.empty() && command[0] == '/') {
+//         command.erase(0, 1);
+//     }
+
+//     // Convert commands to uppercase CHANGE LATER
+//     std::transform(command.begin(), command.end(), command.begin(), ::toupper);
+
+//     // Extract the command keyword (up to first space or end of string)
+//     size_t spacePos = command.find(' ');
+//     std::string command_keyword = command.substr(0, spacePos);
+
+//     static const std::unordered_map<std::string, Commands> command_map = {
+//         {"PASS", PASS},
+//         {"USER", USER},
+//         {"NICK", NICK},
+//         {"JOIN", JOIN},
+//         {"PART", PART},
+//         {"PRIVMSG", PRIVMSG}
+//     };
+
+//     auto it = command_map.find(command_keyword);
+//     return (it != command_map.end()) ? it->second : INVALID;
+// }
+
+Commands    getCmd(const char buf[Server::MAX_BUF]) {
     std::string command(buf);
     if (command[0] == '/')
         command = command.substr(1);
