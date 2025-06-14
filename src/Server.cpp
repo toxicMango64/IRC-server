@@ -10,32 +10,32 @@ bool Server::isValid() const {
 int Server::createSocket() {
     int sFd = socket(AF_INET, SOCK_STREAM, 0);
     if (sFd < 0) {
-        throw std::runtime_error("Failed to create socket");
+        throw (errno);
     }
     return sFd;
 }
 
 void Server::setNonBlocking(int fd) {
     if (fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) < 0) {
-        throw std::runtime_error("Failed to set non-blocking");
+        throw (errno);
     }
 }
 
 void Server::bindSocket(int sFd) {
-    sockaddr_in addr;
+	sockaddr_in addr;
     std::memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port = htons(this->_port);
-
-    if (bind(sFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-        throw std::runtime_error("Bind failed");
+	
+    if (-1 == bind(sFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr))) {
+		throw (errno);
     }
 }
 
 void Server::startListening(int sFd) {
     if (listen(sFd, SOMAXCONN) < 0) {
-        throw std::runtime_error("Listen failed");
+        throw (errno);
     }
 }
 
@@ -87,7 +87,7 @@ void Server::run(int sFd) {
     while (true) {
 
         if (poll(&fds[0], fds.size(), -1) < 0) {
-            throw std::runtime_error("Poll failed");
+            throw (errno);
         }
 
         for (size_t i = 0; i < fds.size(); ++i) {
