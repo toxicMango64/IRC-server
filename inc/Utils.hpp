@@ -36,8 +36,13 @@ inline void debugPrint(const std::string& msg) {
 	std::cerr << "[DEBUG] " << msg << "\n";
 }
 
+// log_error("file name: { %s }", av[1]);
 // Error: file name: {README.}: No such file or directory
 inline void log_error(const char* format, ...) {
+
+	if (!DEBUG_MODE)
+		return ;
+
 	va_list args;
 	va_start(args, format);
 
@@ -72,16 +77,3 @@ inline void log_error(const char* format, ...) {
 
 	std::cerr << "Error: " << error_message.str() << "\n";
 }
-
-// int main(int ac, char **av) {
-
-// 	(void) ac;
-// 	// Attempt to open a non-existent file to set errno
-// 	FILE* file = fopen(av[1], "r");
-// 	if (file == nullptr) {
-// 		log_error("file name: { %s }", av[1]);
-// 	} else {
-// 		fclose(file); // Close the file if it was opened successfully
-// 	}
-// 	return 0;
-// }
