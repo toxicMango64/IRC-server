@@ -40,10 +40,11 @@ class Server {
 		void	handleClientMessage(size_t i, std::vector<pollfd>& fds, char* buffer);
 		
 		bool	isValid( void ) const;
+		void	closeFds( void ); // implement the fucntion
 		void	run( int sFd );
 		int		createSocket( void );
-		void	setNonBlocking( int fd );
 		void	bindSocket( int sFd );
+		int		setNonBlocking( int fd );
 		void	startListening( int sFd );
 		void	handleNewConnection( int sFd, std::vector<pollfd>& fds );
 
@@ -53,5 +54,7 @@ class Server {
 	private:
 		const int _port;
 		const std::string _password;
+		// static const int MAX_BUF = 512;
+
 		std::map<int, Client> connectedClients;
 };
