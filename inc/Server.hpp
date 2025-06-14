@@ -27,9 +27,9 @@ enum e_irc {
 	MAX_INT_INDEX = 10
 };
 
-#include <stdio.h>
+// #include <stdio.h>
 
-#define welcome(server) printf("welcome to {%s}, hope you enjoy your time here\n", server);
+// #define welcome(server) printf("welcome to {%s}, hope you enjoy your time here\n", server);
 
 class Client;
 
@@ -51,7 +51,7 @@ class Server {
 		const std::string& getPassword() const { return _password; }
 
 	private:
-		int _port;
-		std::string _password;
+		const int _port;
+		const std::string _password;
 		std::map<int, Client> connectedClients;
 };
