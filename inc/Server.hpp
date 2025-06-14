@@ -37,15 +37,16 @@ class Server {
 	public:
 		static const int MAX_BUF = 512;
 		Server( int port, const std::string& password );
-		void	handleClientMessage(size_t i, std::vector<pollfd>& fds);
-
 		bool	isValid( void ) const;
-		void	closeFds( void ); // implement the fucntion
+		static void SignalHandler(int signum);
+
 		void	run( int sFd );
+		void	closeFds( void ); // implement the fucntion
 		int		createSocket( void );
 		void	bindSocket( int sFd );
 		int		setNonBlocking( int fd );
 		void	startListening( int sFd );
+		void	handleClientMessage(size_t i, std::vector<pollfd>& fds);
 		void	handleNewConnection( int sFd, std::vector<pollfd>& fds );
 
 		const int& getPort() const { return _port; }
