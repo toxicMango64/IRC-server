@@ -11,7 +11,7 @@
 */
 
 #include "../inc/Server.hpp"
-#include <csignal>
+// #include <csignal>
 
 /**
  * Checks: 
@@ -32,8 +32,8 @@ int main(const int ac, const char *const *av) {
 		return (1);
 	}
 
+	Server server(port, av[2]);
 	try {
-		Server server(port, av[2]);
 		// add server signal here
 		int sFd = server.createSocket();
 
@@ -44,10 +44,10 @@ int main(const int ac, const char *const *av) {
 
 	} catch (const std::exception& e) {
 		std::cerr << "Error: " << e.what() << "\n";
-		return (1);
+		return (server.closeFds(), 1);
 	} catch (const int& errnum) {
 		std::cerr << "Error: " << std::strerror(errnum) << "\n";
-		return (errnum);
+		return (server.closeFds(), errnum);
 	}
 
 	return (0);
