@@ -1,25 +1,32 @@
 /**
- * +----------------------------------------+
- * |  _                                     |
- * | (_) _ __  ___  ___   ___  _ __ __   __ |
- * | | || '__|/ __|/ __| / _ \| '__|\ \ / / |
- * | | || |  | (__ \__ \|  __/| |    \ V /  |
- * | |_||_|   \___||___/ \___||_|     \_/   |
- * |                                        |
- * |                                        |
- * +----------------------------------------+
+* +----------------------------------------+
+* |  _                                     |
+* | (_) _ __  ___  ___   ___  _ __ __   __ |
+* | | || '__|/ __|/ __| / _ \| '__|\ \ / / |
+* | | || |  | (__ \__ \|  __/| |    \ V /  |
+* | |_||_|   \___||___/ \___||_|     \_/   |
+* |                                        |
+* |                                        |
+* +----------------------------------------+
 */
 
 #include "../inc/Server.hpp"
-// #include <csignal>
+#include "../inc/Server.hpp"
+#include <csignal>
+#include <cstring>
+#include <iostream>
 
-/**
- * Checks: 
- * - `ac != 3`: Prints usage message and returns 1.
- * - `!validatePort(av[1], port)`: Returns 1 if port is invalid.
- * - `!validatePassword(av[2])`: Returns 1 if password is invalid.
- * - Else: Initializes and runs server inside a lambda, returns 0 on success or 1 on exception.
- */
+void signalHandler(int signal) {
+	if (signal == SIGINT) {
+		std::cerr << "\nCaught SIGINT (Ctrl+C). Stopping server...\n";
+		exit(0);
+	} 
+	else if (signal == SIGQUIT) {
+		std::cerr << "\nCaught SIGQUIT (Ctrl+D). Stopping server...\n";
+		exit(0);
+	}
+}
+
 int main(const int ac, const char *const *av) {
 
 	if (ac != 3) {
@@ -27,14 +34,32 @@ int main(const int ac, const char *const *av) {
 		return 1;
 	}
 
-	int	port = 0;
+	int port = 0;
 	if (!validatePort(av[1], port) || (!validatePassword(av[2]))) {
 		return (1);
 	}
 
 	Server server(port, av[2]);
+
+	struct sigaction act;
+
+	// Set up signal handler
+	act.sa_handler = signalHandler;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0;
+
+	// Register the signal handler for SIGINT (Ctrl+C) and SIGQUIT (Ctrl+D)
+	if (sigaction(SIGINT, &act, nullptr) == -1) {
+		std::cerr << "Error setting SIGINT handler: " << std::strerror(errno) << std::endl;
+		return 1;
+	}
+	if (sigaction(SIGQUIT, &act, nullptr) == -1) {
+		std::cerr << "Error setting SIGQUIT handler: " << std::strerror(errno) << std::endl;
+		return 1;
+	}
+
 	try {
-		// add server signal here
+		// Add server signal handling here (already integrated above)
 		int sFd = server.createSocket();
 
 		server.setNonBlocking(sFd);
