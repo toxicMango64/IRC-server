@@ -37,8 +37,8 @@ class Server {
 	public:
 		static const int MAX_BUF = 512;
 		Server( int port, const std::string& password );
-		void	handleClientMessage(size_t i, std::vector<pollfd>& fds, char* buffer);
-		
+		void	handleClientMessage(size_t i, std::vector<pollfd>& fds);
+
 		bool	isValid( void ) const;
 		void	closeFds( void ); // implement the fucntion
 		void	run( int sFd );
