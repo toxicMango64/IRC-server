@@ -122,14 +122,16 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
     debugPrint("Welcome message sent to client FD: " + std::to_string(clientFd));
 }
 
-void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds, char* buffer) {
+void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
+
+	char buffer[MAX_BUF]; // every client gets their own buffer size
 	int clientFd = fds[clientIndex].fd;
     std::memset(buffer, 0, MAX_BUF);
 	
     ssize_t bytesRead = recv(clientFd, buffer, MAX_BUF, 0);
     if (bytesRead <= 0) {
 		if (bytesRead == 0) {
-			debugPrint("Client disconnected, fd: " + std::to_string(clientFd) + "\n");
+			debugPrint("Client disconnected, fd: " + std::to_string(clientFd));
         } else {
 			std::cerr << "Error reading from client fd " << clientFd << ": " << strerror(errno) << "\n";
         }
@@ -138,9 +140,16 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds, c
         connectedClients.erase(clientFd);
     } else {
 		// Handle the received message here
+		debugPrint("Received from client fd " + std::to_string(clientFd) + ": " + buffer);
 
-		debugPrint("Received from client fd " + std::to_string(clientFd) + ": " + buffer + "\n");
-        // Process the message
+        // // Process the message
+		// buffer[bytesRead] = '\0';
+		// cli->append_to_buffer(buffer);
+		// if (cli->get_buffer().find_first_of(CRLF) != std::string::npos)
+		// {
+		// 	_execute_command(cli->get_buffer(), fd);
+		// 	cli->clear_buffer();
+		// }
     }
 }
 
@@ -153,12 +162,10 @@ void Server::run(int sFd) {
     serverPoll.revents = 0;
     fds.push_back(serverPoll);
 	
-	debugPrint("Server started on port " + std::to_string(_port) + "\n");
-
-    char buffer[MAX_BUF];
+	debugPrint("Server started on port " + std::to_string(_port));
     
-    while (true) {
-
+    while (true) { // nuha's signal addition goes here as condition
+	
         int pollRet = poll(fds.data(), fds.size(), -1);
         
         if (pollRet <= 0) {
@@ -174,7 +181,7 @@ void Server::run(int sFd) {
                 if (fds[i].fd == sFd) {
                     handleNewConnection(sFd, fds);
                 } else {
-                    handleClientMessage(i, fds, buffer);
+                    handleClientMessage(i, fds);
                 }
             }
         }
