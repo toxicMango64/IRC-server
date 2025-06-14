@@ -73,11 +73,7 @@ void Server::handleClientMessage(size_t i, std::vector<pollfd>& fds, char* buffe
     }
 }
 
-void Server::run() {
-    int sFd = createSocket();
-    setNonBlocking(sFd);
-    bindSocket(sFd);
-    startListening(sFd);
+void Server::run(int sFd) {
 
     std::vector<pollfd> fds;
 	pollfd server_poll;
