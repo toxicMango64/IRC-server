@@ -33,7 +33,11 @@ int main(const int ac, const char *const *av) {
 
 	try {
 		Server server(port, av[2]);
-		server.run();
+		int sFd = server.createSocket();
+		server.setNonBlocking(sFd);
+		server.bindSocket(sFd);
+		server.startListening(sFd);
+		server.run(sFd);
 	} catch (const std::exception& e) {
 		std::cerr << "Error: " << e.what() << "\n";
 		return (1);
