@@ -1,24 +1,38 @@
 #include "../inc/Server.hpp"
+#include <sys/socket.h>
 
-Server::Server(int port, const std::string& password) 
+Server::Server(const int port, const std::string& password) 
 	: _port(port), _password(password) {}
 
 bool Server::isValid() const {
 	return (_port >= MIN_PORT && _port <= MAX_PORT) && !_password.empty();
 }
 
+void Server::closeFds() { }
+
 int Server::createSocket() {
     int sFd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sFd < 0) {
-        throw std::runtime_error("Failed to create socket");
+    if (sFd == -1) {
+        throw (std::runtime_error("Failed to create socket: "));
     }
     return sFd;
 }
 
-void Server::setNonBlocking(int fd) {
-    if (fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) < 0) {
-        throw std::runtime_error("Failed to set non-blocking");
+// gets the current flags of the file descriptor and sets them to non blocking
+int Server::setNonBlocking(int fd) {
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1) {
+        return (-1);
     }
+
+    flags |= O_NONBLOCK;
+
+    int ret = fcntl(fd, F_SETFL, flags);
+    if (ret == -1) {
+        return (-1);
+    }
+
+    return (0);
 }
 
 void Server::bindSocket(int sFd) {
@@ -28,78 +42,146 @@ void Server::bindSocket(int sFd) {
     addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port = htons(this->_port);
 
-    if (bind(sFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-        throw std::runtime_error("Bind failed");
+    if (bind(sFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1) {
+        throw std::runtime_error("Failed to bind socket: " + std::string(strerror(errno)));
     }
 }
+
 
 void Server::startListening(int sFd) {
-    if (listen(sFd, SOMAXCONN) < 0) {
-        throw std::runtime_error("Listen failed");
+    if (listen(sFd, SOMAXCONN) == -1) {
+        throw (std::runtime_error("Failed to start listening on socket: "));
     }
 }
+
+// void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
+//     int clientFd = accept(sFd, NULL, NULL);  // Replace NULL with proper sockaddr_in
+//     if (clientFd == -1) {
+//         throw std::runtime_error("Failed to accept new connection: " + std::string(strerror(errno)));
+//     }
+
+//     // Set the client socket to non-blocking
+//     if (setNonBlocking(clientFd) == -1) {
+//         throw std::runtime_error("Failed to set non-blocking on client socket: " + std::string(strerror(errno)));
+//     }
+
+//     // Add new client to the poll list
+//     pollfd clientPoll;
+//     clientPoll.fd = clientFd;
+//     clientPoll.events = POLLIN;
+//     clientPoll.revents = 0;
+//     fds.push_back(clientPoll);
+
+//     // Insert client into the map (handling exception if needed)
+//     try {
+//         connectedClients.emplace(clientFd, Client(clientFd));
+//     } catch (const std::exception& e) {
+//         throw std::runtime_error("Failed to store new client: " + std::string(e.what()));
+//     }
+
+//     // Send a welcome message
+//     const std::string welcome = ":ircserv 001 client :Welcome to ft_irc\r\n";
+//     send(clientFd, welcome.c_str(), welcome.length(), 0);
+
+//     std::cout << "New client connected, fd: " << clientFd << "\n";
+// }
 
 void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
-    int client_fd = accept(sFd, NULL, NULL);
-    if (client_fd > 0) {
-        setNonBlocking(client_fd);
-        pollfd client_poll;
-		client_poll.fd = client_fd;
-		client_poll.events = POLLIN;
-		client_poll.revents = 0;
-        fds.push_back(client_poll);
-        connectedClients.insert(std::make_pair(client_fd, Client(client_fd)));
-        debugPrint("New client connected.");
-        const std::string welcome = ":ircserv 001 client :Welcome to ft_irc\r\n";
-        send(client_fd, welcome.c_str(), welcome.length(), 0);
+    sockaddr_in clientAddr;
+    socklen_t addrLen = sizeof(clientAddr);
+
+    int clientFd = accept(sFd, (struct sockaddr*)&clientAddr, &addrLen);
+    if (clientFd == -1) {
+        throw std::runtime_error("Failed to accept new connection: " + std::string(strerror(errno)));
     }
+
+    if (setNonBlocking(clientFd) == -1) {
+        throw std::runtime_error("Failed to set non-blocking mode for client socket");
+    }
+
+    pollfd clientPoll;
+    clientPoll.fd = clientFd;
+    clientPoll.events = POLLIN;
+    clientPoll.revents = 0;
+    fds.push_back(clientPoll);
+
+	try {
+		connectedClients.insert(std::make_pair(clientFd, Client(clientFd)));
+	} catch (const std::exception& e) {
+		throw std::runtime_error("Failed to store new client: " + std::string(e.what()));
+	}
+
+    debugPrint("New client connected, FD: " + std::to_string(clientFd));
+
+    const std::string welcome = ":ircserv 001 client :Welcome to ft_irc\r\n";
+    ssize_t bytesSent = send(clientFd, welcome.c_str(), welcome.length(), 0);
+    if (bytesSent == -1) {
+        throw std::runtime_error("Failed to send welcome message to client");
+    }
+
+    debugPrint("Welcome message sent to client FD: " + std::to_string(clientFd));
 }
 
-void Server::handleClientMessage(size_t i, std::vector<pollfd>& fds, char* buffer) {
-    int fd = fds[i].fd;
-    int n = recv(fd, buffer, 511, 0);
-    if (n <= 0) {
-        close(fd);
-        connectedClients.erase(fd);
-        fds.erase(fds.begin() + static_cast<int64_t>(i));
+void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
+
+	char buffer[MAX_BUF]; // every client gets their own buffer size
+	int clientFd = fds[clientIndex].fd;
+    std::memset(buffer, 0, MAX_BUF);
+	
+    ssize_t bytesRead = recv(clientFd, buffer, MAX_BUF, 0);
+    if (bytesRead <= 0) {
+		if (bytesRead == 0) {
+			debugPrint("Client disconnected, fd: " + std::to_string(clientFd));
+        } else {
+			std::cerr << "Error reading from client fd " << clientFd << ": " << strerror(errno) << "\n";
+        }
+        close(clientFd);
+        fds.erase(fds.begin() + clientIndex);
+        connectedClients.erase(clientFd);
     } else {
-        buffer[n] = '\0';
-        std::string output;
-        std::cout << ">> " << buffer;
-        handleBuffer(connectedClients.at(fd), buffer, this->getPassword(), output);
-        if (!output.empty()) {
-            send(fd, output.c_str(), output.length(), 0);
-        }
+		// Handle the received message here
+		debugPrint("Received from client fd " + std::to_string(clientFd) + ": " + buffer);
+
+        // // Process the message
+		// buffer[bytesRead] = '\0';
+		// cli->append_to_buffer(buffer);
+		// if (cli->get_buffer().find_first_of(CRLF) != std::string::npos)
+		// {
+		// 	_execute_command(cli->get_buffer(), fd);
+		// 	cli->clear_buffer();
+		// }
     }
 }
 
-void Server::run() {
-    int sFd = createSocket();
-    setNonBlocking(sFd);
-    bindSocket(sFd);
-    startListening(sFd);
-
-    std::vector<pollfd> fds;
-	pollfd server_poll;
-	server_poll.fd = sFd;
-	server_poll.events = POLLIN;
-	server_poll.revents = 0;
-    fds.push_back(server_poll);
-    char buffer[512];
-
-    std::cout << "Server started on port " << _port << "\n";
-    while (true) {
-
-        if (poll(&fds[0], fds.size(), -1) < 0) {
-            throw std::runtime_error("Poll failed");
+void Server::run(int sFd) {
+	std::vector<pollfd> fds;
+	
+    pollfd serverPoll;
+    serverPoll.fd = sFd;
+    serverPoll.events = POLLIN;
+    serverPoll.revents = 0;
+    fds.push_back(serverPoll);
+	
+	debugPrint("Server started on port " + std::to_string(_port));
+    
+    while (true) { // nuha's signal addition goes here as condition
+	
+        int pollRet = poll(fds.data(), fds.size(), -1);
+        
+        if (pollRet <= 0) {
+            if (pollRet == 0) {
+                continue ;
+            } else {
+                throw (std::runtime_error("Poll failed: " + std::string(strerror(errno))));
+            }
         }
-
+        
         for (size_t i = 0; i < fds.size(); ++i) {
             if (fds[i].revents & POLLIN) {
                 if (fds[i].fd == sFd) {
                     handleNewConnection(sFd, fds);
                 } else {
-                    handleClientMessage(i, fds, buffer);
+                    handleClientMessage(i, fds);
                 }
             }
         }

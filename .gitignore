@@ -4,6 +4,10 @@
 Makefile.mk
 ircserv
 
+fixed
+*fixed
+fixed/
+
 # Prerequisites
 *.d
 

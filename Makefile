@@ -7,9 +7,9 @@
 NAME        := ircserv
 SRCDIR      := src/
 ODIR        := obj/
-INC         := ./inc
 SANITIZED_FLAG := .sanitized
 
+INC         := ./inc
 SRC := $(SRCDIR)main.cpp \
        $(SRCDIR)Client.cpp \
        $(SRCDIR)CommandHandler.cpp \
@@ -191,7 +191,7 @@ scan: fclean ## Scan-build static analysis
 		-enable-checker security -enable-checker unix -enable-checker core \
 		-enable-checker cplusplus -enable-checker deadcode -enable-checker nullability \
 		-analyzer-config aggressive-binary-operation-simplification=true \
-		--status-bugs -v make
+		-v make
 	@echo "✅ Scan-build analysis complete"
 
 PHONY	+=	banner
