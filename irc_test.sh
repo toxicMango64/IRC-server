@@ -20,12 +20,13 @@ send_cmds() {
 
   log "Connecting to $HOST:$PORT..."
 
-  # Start nc to read server responses in background
-  timeout $TIMEOUT nc "$HOST" "$PORT" | while IFS= read -r line; do
-    echo "[SERVER] $line"
-  done &
+  timeout_pid=$(nc "$HOST" "$PORT" & echo $!)
+  sleep $TIMEOUT && kill $timeout_pid
 
-  nc_pid=$!
+  if ! ps -p $nc_pid > /dev/null; then
+    log "Failed to open connection"
+    return 1
+  fi
 
   # Open tcp connection for writing commands
   exec 3<>/dev/tcp/"$HOST"/"$PORT" || { log "Failed to open connection"; kill $nc_pid; return 1; }
