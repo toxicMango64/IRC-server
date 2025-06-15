@@ -119,13 +119,15 @@ d
 ```
 (using `Ctrl+D` to simulate broken-up message delivery).
 
-use-full links:
-(beej.us/guide)[https://beej.us/guide/bgnet/html/split/client-server-background.html#a-simple-stream-server]
-(ircdocs-servers)[https://modern.ircdocs.horse/#servers]
-(ircdocs-errnomotd-422)[https://modern.ircdocs.horse/#errnomotd-422]
-(rfc-editor)[https://www.rfc-editor.org/rfc/rfc1459.html]
-(ircdocs-user-message)[https://modern.ircdocs.horse/#user-message]
-(uchicago-chirc)[http://chi.cs.uchicago.edu/chirc/irc_examples.html]
-(ircdocs-cap-message)[https://modern.ircdocs.horse/#cap-message]
-(irssi-github repo)[https://github.com/irssi/irssi]
+## Useful Links
+
+- [Beej's Guide to Network Programming (Simple Stream Server)](https://beej.us/guide/bgnet/html/split/client-server-background.html#a-simple-stream-server)
+- [IRCDocs – Servers](https://modern.ircdocs.horse/#servers)
+- [IRCDocs – ERR_NOMOTD (422)](https://modern.ircdocs.horse/#errnomotd-422)
+- [RFC 1459 – Internet Relay Chat Protocol (RFC Editor)](https://www.rfc-editor.org/rfc/rfc1459.html)
+- [IRCDocs – USER Message](https://modern.ircdocs.horse/#user-message)
+- [University of Chicago CHIRC – IRC Examples](http://chi.cs.uchicago.edu/chirc/irc_examples.html)
+- [IRCDocs – CAP Message](https://modern.ircdocs.horse/#cap-message)
+- [Irssi GitHub Repository](https://github.com/irssi/irssi)
+
 
