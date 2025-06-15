@@ -1,10 +1,12 @@
 // CommandHandler.hpp
 #pragma once
 
+#include <algorithm>
+#include <string>
+
 #include "Client.hpp"
 #include "Utils.hpp"
 #include "Server.hpp"
-#include <string>
 
 enum Commands {
     PASS,

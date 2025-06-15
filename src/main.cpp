@@ -10,11 +10,12 @@
 * +----------------------------------------+
 */
 
-#include "../inc/Server.hpp"
-#include "../inc/Server.hpp"
 #include <csignal>
 #include <cstring>
 #include <iostream>
+#include <stdlib.h>
+
+#include "Server.hpp"
 
 void signalHandler(int signal) {
 	if (signal == SIGINT) {
@@ -49,11 +50,11 @@ int main(const int ac, const char *const *av) {
 	act.sa_flags = 0;
 
 	// Register the signal handler for SIGINT (Ctrl+C) and SIGQUIT (Ctrl+D)
-	if (sigaction(SIGINT, &act, nullptr) == -1) {
+	if (sigaction(SIGINT, &act, NULL) == -1) {
 		std::cerr << "Error setting SIGINT handler: " << std::strerror(errno) << std::endl;
 		return 1;
 	}
-	if (sigaction(SIGQUIT, &act, nullptr) == -1) {
+	if (sigaction(SIGQUIT, &act, NULL) == -1) {
 		std::cerr << "Error setting SIGQUIT handler: " << std::strerror(errno) << std::endl;
 		return 1;
 	}

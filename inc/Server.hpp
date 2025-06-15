@@ -1,24 +1,23 @@
 // Server.hpp
 #pragma once
 
-#include <stdexcept>
-#include <stdint.h>
-#include <iostream>
-#include "Utils.hpp"
-
 #include <arpa/inet.h>
+#include <iostream>
 #include <cstring>
 #include <fcntl.h>
 #include <map>
 #include <netinet/in.h>
 #include <poll.h>
+#include <stdexcept>
+#include <stdint.h>
 #include <string>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
 
-#include "CommandHandler.hpp"
 #include "Client.hpp"
+#include "CommandHandler.hpp"
+#include "Utils.hpp"
 
 // enum class e_irc : std::uint16_t {
 enum e_irc {
@@ -55,7 +54,6 @@ class Server {
 	private:
 		const int _port;
 		const std::string _password;
-		// static const int MAX_BUF = 512;
 
 		std::map<int, Client> connectedClients;
 };

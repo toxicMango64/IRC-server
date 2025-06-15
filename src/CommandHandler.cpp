@@ -1,4 +1,4 @@
-#include "../inc/CommandHandler.hpp"
+#include "CommandHandler.hpp"
 
 // Commands getCmd(const char buf[MAX_BUF]) {
 //     if (!buf || std::strlen(buf) == 0) {

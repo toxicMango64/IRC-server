@@ -1,5 +1,4 @@
-#include "../inc/Server.hpp"
-#include <sys/socket.h>
+#include "Server.hpp"
 
 Server::Server(const int port, const std::string& password) 
 	: _port(port), _password(password) {}
@@ -111,7 +110,7 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
 		throw std::runtime_error("Failed to store new client: " + std::string(e.what()));
 	}
 
-    debugPrint("New client connected, FD: " + std::to_string(clientFd));
+    debugPrint(&"New client connected, FD: " [ clientFd ]);
 
     const std::string welcome = ":ircserv 001 client :Welcome to ft_irc\r\n";
     ssize_t bytesSent = send(clientFd, welcome.c_str(), welcome.length(), 0);
@@ -119,7 +118,7 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
         throw std::runtime_error("Failed to send welcome message to client");
     }
 
-    debugPrint("Welcome message sent to client FD: " + std::to_string(clientFd));
+    debugPrint(&"Welcome message sent to client FD: " [(clientFd)]);
 }
 
 void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
@@ -131,7 +130,7 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
     ssize_t bytesRead = recv(clientFd, buffer, MAX_BUF, 0);
     if (bytesRead <= 0) {
 		if (bytesRead == 0) {
-			debugPrint("Client disconnected, fd: " + std::to_string(clientFd));
+			debugPrint(&"Client disconnected, fd: " [(clientFd)]);
         } else {
 			std::cerr << "Error reading from client fd " << clientFd << ": " << strerror(errno) << "\n";
         }
@@ -140,7 +139,7 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
         connectedClients.erase(clientFd);
     } else {
 		// Handle the received message here
-		debugPrint("Received from client fd " + std::to_string(clientFd) + ": " + buffer);
+		// debugPrint("Received from client fd " + buffer);
 
         // // Process the message
 		// buffer[bytesRead] = '\0';
@@ -162,7 +161,7 @@ void Server::run(int sFd) {
     serverPoll.revents = 0;
     fds.push_back(serverPoll);
 	
-	debugPrint("Server started on port " + std::to_string(_port));
+	debugPrint(&"Server started on port " [(_port)]);
     
     while (true) { // nuha's signal addition goes here as condition
 	
