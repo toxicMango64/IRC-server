@@ -118,4 +118,14 @@ man
 d
 ```
 (using `Ctrl+D` to simulate broken-up message delivery).
----
+
+use-full links:
+(beej.us/guide)[https://beej.us/guide/bgnet/html/split/client-server-background.html#a-simple-stream-server]
+(ircdocs-servers)[https://modern.ircdocs.horse/#servers]
+(ircdocs-errnomotd-422)[https://modern.ircdocs.horse/#errnomotd-422]
+(rfc-editor)[https://www.rfc-editor.org/rfc/rfc1459.html]
+(ircdocs-user-message)[https://modern.ircdocs.horse/#user-message]
+(uchicago-chirc)[http://chi.cs.uchicago.edu/chirc/irc_examples.html]
+(ircdocs-cap-message)[https://modern.ircdocs.horse/#cap-message]
+(irssi-github repo)[https://github.com/irssi/irssi]
+
