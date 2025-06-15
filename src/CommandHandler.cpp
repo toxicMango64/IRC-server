@@ -35,7 +35,6 @@ Commands    getCmd(const std::string& buf) {
     std::string command = buf;
     if (command[0] == '/')
         command = command.substr(1);
-    // std::string command_prefix = command.substr(0, 4);
     std::transform(command.begin(), command.end(), command.begin(), ::toupper);
 
     if (command == "PASS") {
@@ -54,9 +53,8 @@ Commands    getCmd(const std::string& buf) {
     return (INVALID);
 }
 
-std::vector<std::string> split(const std::string &txt, std::string ch)
+size_t split(const std::string &txt, std::string ch, std::vector<std::string> &strs)
 {
-    std::vector<std::string> strs;
     size_t pos = txt.find( ch );
     size_t initialPos = 0;
     strs.clear();
@@ -70,14 +68,13 @@ std::vector<std::string> split(const std::string &txt, std::string ch)
     }
 
     // Add the last one
-    strs.push_back( txt.substr( initialPos, std::min( pos, txt.size() ) - initialPos + 1 ) );
+    strs.push_back( txt.substr( initialPos, std::min( pos, txt.size() - 1 ) - initialPos ) );
 
-    return (strs);
+    return (strs.size());
 }
 
 Numeric parseBuffer(const char buf[], std::vector<std::string> &tokens) {
-    tokens.clear();
-    tokens = split(std::string(buf), " ");
+    split(std::string(buf), " ", tokens);
     if (getCmd(tokens[0]) == PASS) {
         if (tokens.size() < 2) {
             return (ERR_NEEDMOREPARAMS);
@@ -91,19 +88,19 @@ Numeric parseBuffer(const char buf[], std::vector<std::string> &tokens) {
     return (SUCCESS);
 }
 
-void    executeBuffer(std::vector<std::string> &tokens, Client &client, std::string &output) {
+void    executeBuffer(std::vector<std::string> &tokens, Client &client, std::string &output, const std::string& password) {
     if (client.state == UNAUTHENTICATED) {
         if (getCmd(tokens[0]) != PASS) {
             output = "Please enter the password\r\n";
             return ;
         }
-        // if (providedPassword == password) {
+        if (tokens[1] == password) {
             client.state = AUTHENTICATED;
             output = "User authenticated\r\n";
-        // } else {
-        //     output = "Incorrect password\r\n";
-        //     return;
-        // }
+        } else {
+            output = "Incorrect password\r\n";
+            return;
+        }
     } else if (client.state == AUTHENTICATED) {
         // Check if user enters USER and NICK here
         if (getCmd(tokens[0]) == NICK) {
@@ -136,9 +133,16 @@ void    executeBuffer(std::vector<std::string> &tokens, Client &client, std::str
 }
 
 void    handleBuffer(Client& client, const char buf[], const std::string& password, std::string& output) {
-    (void) password;
     std::vector<std::string> tokens;
-    if (parseBuffer(buf, tokens) == SUCCESS) {
-        executeBuffer(tokens, client, output);
+    Numeric parseCode = parseBuffer(buf, tokens);
+    if (parseCode == SUCCESS) {
+        executeBuffer(tokens, client, output, password);
+    } else if (parseCode == ERR_NEEDMOREPARAMS) {
+        std::stringstream ss;
+        ss << client.fd;
+        ss >> output;
+        output.append(" ");
+        output.append(tokens[0]);
+        output.append(" :Not enough parameters\r\n");
     }
 }
