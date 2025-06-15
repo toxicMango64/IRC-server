@@ -6,6 +6,18 @@
 #include <iostream>
 #include "Utils.hpp"
 
+#if defined(_MSC_VER)
+  #ifdef BUILDING_MYLIB
+    #define EXPORT __declspec(dllexport)
+  #else
+    #define EXPORT __declspec(dllimport)
+  #endif
+#elif defined(__GNUC__) || defined(__clang__)
+  #define EXPORT __attribute__((visibility("default")))
+#else
+  #define EXPORT
+#endif
+
 #include <arpa/inet.h>
 #include <cstring>
 #include <fcntl.h>
@@ -32,16 +44,24 @@ enum e_irc {
 // #define welcome(server) printf("welcome to {%s}, hope you enjoy your time here\n", server);
 
 class Client;
+class Channel;
 
 class Server {
 	public:
-		static const int MAX_BUF = 512;
+		static const int	MAX_BUF = 512;
+		static const char	buffer[MAX_BUF] __attribute__((aligned(16)));
+
+		bool				isValid( void ) const;
+		static void			signalHandler(int signum);
+
+		Server();
+		~Server();
+		Server( Server const &src );
+		Server &operator=( Server const &src );
 		Server( int port, const std::string& password );
-		bool	isValid( void ) const;
-		static void SignalHandler(int signum);
 
 		void	run( int sFd );
-		void	closeFds( void ); // implement the fucntion
+		void	closeFds( void ); /** implement the fucntion */
 		int		createSocket( void );
 		void	bindSocket( int sFd );
 		int		setNonBlocking( int fd );
@@ -51,11 +71,20 @@ class Server {
 
 		const int& getPort() const { return _port; }
 		const std::string& getPassword() const { return _password; }
+		static void SignalHandler( int signum );
 
 	private:
+		// static const int MAX_BUF = 512;
 		const int _port;
 		const std::string _password;
-		// static const int MAX_BUF = 512;
+		static bool Signal;
 
 		std::map<int, Client> connectedClients;
+		int server_fdsocket;
+		std::vector<Client> clients;
+		std::vector<Channel> channels;
+		std::vector<struct pollfd> fds;
+		struct sockaddr_in add;
+		struct sockaddr_in cliaddr;
+		struct pollfd new_cli;
 };
