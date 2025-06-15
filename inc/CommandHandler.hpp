@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 
 #include "Client.hpp"
 #include "Utils.hpp"
@@ -16,6 +17,15 @@ enum Commands {
     PART,
     PRIVMSG,
     INVALID,
+};
+
+enum Numeric {
+    SUCCESS = 0,
+    ERR_UNKNOWNCOMMANDS = 421,
+    ERR_NOTREGISTERED = 451,
+    ERR_NEEDMOREPARAMS = 461,
+    ERR_ALREADYREGISTERED = 462,
+    ERR_PASSWDMISMATCH = 464,
 };
 
 void    handlePass();

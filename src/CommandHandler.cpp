@@ -31,54 +31,87 @@
 //     return (it != command_map.end()) ? it->second : INVALID;
 // }
 
-Commands    getCmd(const char buf[Server::MAX_BUF]) {
-    std::string command(buf);
+Commands    getCmd(const std::string& buf) {
+    std::string command = buf;
     if (command[0] == '/')
         command = command.substr(1);
-    std::string command_prefix = command.substr(0, 4);
-    std::transform(command_prefix.begin(), command_prefix.end(), command_prefix.begin(), ::toupper);
+    // std::string command_prefix = command.substr(0, 4);
+    std::transform(command.begin(), command.end(), command.begin(), ::toupper);
 
-    if (command_prefix == "PASS") {
+    if (command == "PASS") {
         return (PASS);
-    } else if (command_prefix == "USER") {
+    } else if (command == "USER") {
         return (USER);
-    } else if (command_prefix == "NICK") {
+    } else if (command == "NICK") {
         return (NICK);
-    } else if (command_prefix == "JOIN") {
+    } else if (command == "JOIN") {
         return (JOIN);
-    } else if (command_prefix == "PART") {
+    } else if (command == "PART") {
         return (PART);
-    } else if (command_prefix == "PRIVMSG") {
+    } else if (command == "PRIVMSG") {
         return (PRIVMSG);
     }
     return (INVALID);
 }
 
-void    handleBuffer(Client& client, const char buf[512], const std::string& password, std::string& output) {
+std::vector<std::string> split(const std::string &txt, std::string ch)
+{
+    std::vector<std::string> strs;
+    size_t pos = txt.find( ch );
+    size_t initialPos = 0;
+    strs.clear();
+
+    // Decompose statement
+    while( pos != std::string::npos ) {
+        strs.push_back( txt.substr( initialPos, pos - initialPos ) );
+        initialPos = pos + 1;
+
+        pos = txt.find( ch, initialPos );
+    }
+
+    // Add the last one
+    strs.push_back( txt.substr( initialPos, std::min( pos, txt.size() ) - initialPos + 1 ) );
+
+    return (strs);
+}
+
+Numeric parseBuffer(const char buf[], std::vector<std::string> &tokens) {
+    tokens.clear();
+    tokens = split(std::string(buf), " ");
+    if (getCmd(tokens[0]) == PASS) {
+        if (tokens.size() < 2) {
+            return (ERR_NEEDMOREPARAMS);
+        }
+    }
+    else if (getCmd(tokens[0]) == USER) {
+        if (tokens.size() < 5) {
+            return (ERR_NEEDMOREPARAMS);
+        }
+    }
+    return (SUCCESS);
+}
+
+void    executeBuffer(std::vector<std::string> &tokens, Client &client, std::string &output) {
     if (client.state == UNAUTHENTICATED) {
-        if (getCmd(buf) != PASS) {
+        if (getCmd(tokens[0]) != PASS) {
             output = "Please enter the password\r\n";
             return ;
         }
-        // Compare password with correct one here
-        std::string command(buf);
-        std::string providedPassword = command.substr(5);
-        if (providedPassword == password) {
+        // if (providedPassword == password) {
             client.state = AUTHENTICATED;
             output = "User authenticated\r\n";
-        } else {
-            output = "Incorrect password\r\n";
-            return;
-        }
+        // } else {
+        //     output = "Incorrect password\r\n";
+        //     return;
+        // }
     } else if (client.state == AUTHENTICATED) {
         // Check if user enters USER and NICK here
-        if (getCmd(buf) == NICK) {
-            std::string command(buf);
-            client.nickname = command.substr(5);
+        if (getCmd(tokens[0]) == NICK) {
+            client.nickname = tokens[1];
             output = client.nickname + "\r\n";
-        } else if (getCmd(buf) == USER) {
-            std::string command(buf);
-            client.username = command.substr(5);
+        } else if (getCmd(tokens[0]) == USER) {
+            client.username = tokens[1];
+            client.realname = tokens[4];
             output = client.username + "\r\n";
         }
         if (!client.nickname.empty() && !client.username.empty()) {
@@ -87,8 +120,8 @@ void    handleBuffer(Client& client, const char buf[512], const std::string& pas
         }
     } else if (client.state == REGISTERED) {
         // Handle normal commands here
-        if (getCmd(buf) == PRIVMSG) {
-            std::string command(buf);
+        if (getCmd(tokens[0]) == PRIVMSG) {
+            std::string command = tokens[0];
             size_t pos = command.find(":");
             if (pos != std::string::npos) {
                 std::string target = command.substr(8, pos - 8 - 1);
@@ -99,5 +132,13 @@ void    handleBuffer(Client& client, const char buf[512], const std::string& pas
                 output = "Invalid PRIVMSG format\r\n";
             }
         }
+    }
+}
+
+void    handleBuffer(Client& client, const char buf[], const std::string& password, std::string& output) {
+    (void) password;
+    std::vector<std::string> tokens;
+    if (parseBuffer(buf, tokens) == SUCCESS) {
+        executeBuffer(tokens, client, output);
     }
 }
