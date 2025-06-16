@@ -9,22 +9,24 @@ SRCDIR      := src/
 ODIR        := obj/
 SANITIZED_FLAG := .sanitized
 
-INC         := ./inc
-SRC := $(SRCDIR)main.cpp \
-       $(SRCDIR)Client.cpp \
-       $(SRCDIR)CommandHandler.cpp \
-       $(SRCDIR)Server.cpp \
-       $(SRCDIR)Utils.cpp \
-       $(SRCDIR)Channel.cpp
+INC	:=	./inc
+SRC :=	$(SRCDIR)main.cpp \
+    	$(SRCDIR)Client.cpp \
+    	$(SRCDIR)CommandHandler.cpp \
+    	$(SRCDIR)Server.cpp \
+    	$(SRCDIR)Utils.cpp \
+    	$(SRCDIR)Channel.cpp \
+    	$(SRCDIR)Player.cpp
 
 OBJ := $(patsubst %.cpp, $(ODIR)%.o, $(notdir $(SRC)))
 
 # ------------------------------ Compilation Flags --------------------------- #
 
-CXXFLAGS	+= -Wall -Wextra -Werror -I$(INC) -std=c++98
+CXXFLAGS	+= -Wall -Wextra -Werror -I$(INC)
+STDFLAG		:= -std=c++98
 SANITIZE	:= -fsanitize=address
 LDFLAGS		:=
-CFLAGS		:=
+CFLAGS		:= # -stdlib=libstdc++ # -fno-rtti
 DEBUGFLAGS	:=
 
 # ------------------------------- Variables ---------------------------------- #
@@ -40,16 +42,18 @@ UNAME := $(shell uname -s)
 NUMPROC :=
 CXX :=
 
+CXX := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v clang++-$(v)),clang++-$(v))))
+
 # CPU core detection
 ifeq ($(UNAME), Darwin)
     CXX := c++
     NUMPROC := $(shell sysctl -n hw.ncpu)
 else ifeq ($(UNAME), Linux) # Detect best available compiler
-	CXX := $(shell \
-		for bin in clang++-20 clang++-19 clang++-18 clang++-17 clang++ g++-13 g++-12 g++ ; do \
-			if command -v $$bin >/dev/null 2>&1; then echo $$bin; break; fi; \
-		done \
-	)
+# CXX := $(shell \
+# 	for bin in clang++-20 clang++-19 clang++-18 clang++-17 clang++ g++-13 g++-12 g++ ; do \
+# 		if command -v $$bin >/dev/null 2>&1; then echo $$bin; break; fi; \
+# 	done \
+# )
 	NUMPROC := $(shell grep -c ^processor /proc/cpuinfo)
 else
 	$(error Unsupported OS: $(UNAME))
@@ -70,9 +74,9 @@ PHONY	:= all
 ifeq ($(MODE), debug)
     DEBUGFLAGS += -g3 $(SANITIZE)
     ifeq ($(SANITIZED_EXISTS), 1)
-        all: build_info $(NAME) info
+        all: buildinfo $(NAME) info
     else
-        all: createSANITIZED clean build_info $(NAME) info
+        all: createSANITIZED clean buildinfo $(NAME) info
     endif
 else
     ifeq ($(SANITIZED_EXISTS), 1)
@@ -89,7 +93,7 @@ build:
 
 # --------------------------- Targets & Rules --------------------------------- #
 
-CXXFLAGS += $(DEBUGFLAGS)
+CXXFLAGS += $(DEBUGFLAGS) $(STDFLAG)
 $(NAME): $(OBJ)
 	@$(CXX) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $(NAME)
 
@@ -97,14 +101,14 @@ PHONY	+= prepare
 prepare:
 	@mkdir -p $(ODIR)
 
-$(ODIR)%.o: $(SRCDIR)%.cpp | prepare build_info
+$(ODIR)%.o: $(SRCDIR)%.cpp | prepare buildinfo
 	@mkdir -p $(dir $@)
 	@printf "$(L_BLUE)  [info]:  $(L_GREEN)%-30s -> $(L_BLUE)%s$(RESET)\n" "$<" "$@"
 	@$(CXX) -c $(CFLAGS) $(CXXFLAGS) $< -o $@
 
 # Define a pattern rule that compiles every .cpp file into a .o file
-PHONY	+= build_info
-build_info:
+PHONY	+= buildinfo
+buildinfo:
 	@echo "$(L_BLUE)  [info]:  $(L_MAGENTA)$(CXX) $(CFLAGS) $(CXXFLAGS)$(RESET)"
 
 PHONY	+= createSANITIZED
@@ -162,7 +166,8 @@ TIDY_EXTRA_ARGS =	--extra-arg=-std=c++98 \
 CLANG_TIDY = clang-tidy-20
 
 PHONY	+= tidy
-tidy: ## run clang-tidy on project 
+tidy: MODE := tidy $(CLANG_TIDY)
+tidy: info ## run clang-tidy on project 
 	@$(CLANG_TIDY) $(SRC) \
 	--checks=$(TIDY_FLAGS) \
 	$(TIDY_EXTRA_ARGS) \
@@ -171,7 +176,6 @@ tidy: ## run clang-tidy on project
 	--quiet \
 	-- $(CXXFLAGS) $(INCLUDES)
 	@echo "✅ check complete"
-
 
 # DETECTED_SCAN_BUILD := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v scan-build-$(v) >/dev/null 2>&1 && echo scan-build-$(v)),scan-build-$(v))))
 # Try to find the newest scan-build from version 21 down to 15
@@ -183,6 +187,7 @@ ifeq ($(SCAN_BUILD),)
 SCAN_BUILD := scan-build-20
 endif
 
+scan: MODE := scan $(SCAN_BUILD)
 scan: fclean ## Scan-build static analysis
 	@echo "🔍 Running scan-build..."
 	$(info Using scan-build: $(SCAN_BUILD))
@@ -214,6 +219,7 @@ info: ## prints project based info
 	@echo "$(L_GREEN)UNAME       $(RESET): $(L_MAGENTA)$(UNAME)$(RESET)"
 	@echo "$(L_GREEN)NUMPROC     $(RESET): $(L_MAGENTA)$(NUMPROC)$(RESET)"
 	@echo "$(L_GREEN)CC          $(RESET): $(L_MAGENTA)$(COMPILER_VERSION)$(RESET)"
+	@echo "$(L_GREEN)STANDARD    $(RESET): $(L_MAGENTA)$(STANDARD)$(RESET)"
 	@echo "$(L_GREEN)CXXFLAGS    $(RESET): $(L_MAGENTA)$(CXXFLAGS)$(RESET)"
 	@echo "$(L_GREEN)LDFLAGS     $(RESET): $(L_MAGENTA)$(LDFLAGS)$(RESET)"
 	@echo "$(L_GREEN)CFLAGS      $(RESET): $(L_MAGENTA)$(CFLAGS)$(RESET)"
