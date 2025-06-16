@@ -1,12 +1,16 @@
 #include "../../inc/Server.hpp"
+#include "../../inc/Response.hpp"
+#include <cstdlib>
 
 std::string Server::mode_toAppend(const std::string& chain, char opera, char mode) {
     char last = '\0';
-    for (char c : chain)
-    {
+
+    for (size_t i = 0; i < chain.length(); ++i) {
+        char c = chain[i];
         if (c == '+' || c == '-')
             last = c;
     }
+
     if (last != opera)
         return std::string(1, opera) + mode;
     else
@@ -42,7 +46,7 @@ void Server::mode_command(std::string& cmd, int fd)
     std::string channelName, params, modeset;
     std::stringstream mode_chain;
     std::string arguments;
-    Channel* channel = nullptr;
+    Channel* channel = NULL;
     char opera = '\0';
 
     Client* cli = GetClient(fd);
@@ -85,8 +89,9 @@ void Server::mode_command(std::string& cmd, int fd)
     }
 
     size_t pos = 0;
-    for (char mode_char : modeset)
+    for (size_t i = 0; i < modeset.length(); ++i)
     {
+        char mode_char = modeset[i];
         if (mode_char == '+' || mode_char == '-')
         {
             opera = mode_char;
@@ -104,7 +109,7 @@ void Server::mode_command(std::string& cmd, int fd)
             else if (mode_char == 'l')
                 mode_chain << channel_limit(tokens, channel, pos, opera, fd, mode_chain.str(), arguments);
             else
-                _sendResponse(ERR_UNKNOWNMODE(cli->GetNickName(), channel->GetName(), mode_char), fd);
+                _sendResponse(ERR_UNKNOWNMODE(cli->GetNickName(), channel->GetName(), std::string(1, mode_char)), fd);
         }
     }
 
@@ -151,8 +156,10 @@ bool validPassword(const std::string& password)
 {
     if (password.empty())
         return false;
-    for (char c : password)
+
+    for (size_t i = 0; i < password.length(); ++i)
     {
+        char c = password[i];
         if (!std::isalnum(c) && c != '_')
             return false;
     }
