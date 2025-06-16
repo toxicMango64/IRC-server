@@ -1,79 +1,113 @@
 // Utils.hpp
-#pragma once
+#ifndef UTILS_HPP
+#define UTILS_HPP
+
+// # include "Server.hpp"
+
+// #include <atomic>
+#include <iostream>
+#include <sstream>
+#include <cstdarg>
+#include <cerrno>
+#include <cstring>
+#include <iomanip>
+#include <ctime>
+
+bool validatePort( const std::string& portStr, int& result );
+bool validatePassword( const std::string& password );
+
+// // Compiler-specific macros for optimizations
+// #if defined(_MSC_VER)
+//   #define COLD_FN __declspec(noinline)
+//   #define LIKELY(x) (x)
+//   #define UNLIKELY(x) (x)
+// #elif defined(__GNUC__) || defined(__clang__)
+//   #define COLD_FN __attribute__((cold)) __attribute__((noinline))
+//   #define LIKELY(x) __builtin_expect(!!(x), 1)
+//   #define UNLIKELY(x) __builtin_expect(!!(x), 0)
+// #else
+//   #define COLD_FN
+//   #define LIKELY(x) (x)
+//   #define UNLIKELY(x) (x)
+// #endif
 
 #ifndef DEBUG_MODE /* DEBUG_MODE */
 # define DEBUG_MODE true /* Set to false to disable debug output */
 #endif /* DEBUG_MODE */
 
-// # include "Server.hpp"
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <cstdarg>
-#include <cerrno>
-#include <cstring>
+// // Lightweight global toggle (can be changed at runtime too)
+// static constexpr bool kDebugEnabled = DEBUG_MODE;
 
-bool validatePort( const std::string& portStr, int& result );
-bool validatePassword( const std::string& password );
+// Optional: Enable if you're not using C++20's std::format
+#define USE_SIMPLE_FORMATTER
 
-// #include <initializer_list>
+// // Lock to avoid mangled logs from concurrent threads
+// static std::mutex log_mutex;
 
-// enum class LogLevel {
-//     INFO,
-//     DEBUG,
-//     WARNING,
-//     ERROR
-// };
+#if defined(_MSC_VER)
+#define COLD_FN __declspec(noinline)
+#elif defined(__GNUC__) || defined(__clang__)
+#define COLD_FN __attribute__((cold)) __attribute__((noinline))
+#else
+#define COLD_FN
+#endif
 
-// /**
-//  * logMessage:
-//  *  INFO, DEBUG, WARNING, ERROR
-//  */
-// void logMessage(LogLevel level, std::initializer_list<std::string> messages);
+COLD_FN inline void logError(const char* format, ...) {
+#if DEBUG_MODE
 
-inline void debugPrint(const std::string& msg) {
-	if (DEBUG_MODE)
-	std::cerr << "[DEBUG] " << msg << "\n";
-}
+	if (!format) return;
 
-// log_error("file name: { %s }", av[1]);
-// Error: file name: {README.}: No such file or directory
-inline void log_error(const char* format, ...) {
+	std::ostringstream out;
 
-	if (!DEBUG_MODE)
-		return ;
+	std::time_t t = std::time(NULL);
+	char time_buf[64];
+	std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&t));
+	out << "[" << time_buf << "] ";
 
 	va_list args;
 	va_start(args, format);
 
-	std::stringstream error_message;
-
 	for (const char* p = format; *p != '\0'; ++p) {
 		if (*p == '%' && *(p + 1) != '\0') {
 			++p;
-			if (*p == 's') {
-				const char* str = va_arg(args, const char*);
-				error_message << str;
-			} else if (*p == 'd' || *p == 'i') {
-				int num = va_arg(args, int);
-				error_message << num;
-			} else if (*p == 'x') {
-				int num = va_arg(args, int);
-				error_message << std::hex << num << std::dec;
-			} else {
-				error_message << "%" << *p;
+			switch (*p) {
+				case 's': {
+					const char* str = va_arg(args, const char*);
+					out << (str ? str : "(null)");
+					break;
+				}
+				case 'd':
+				case 'i': {
+					int val = va_arg(args, int);
+					out << val;
+					break;
+				}
+				case 'x': {
+					int val = va_arg(args, int);
+					out << std::hex << val << std::dec;
+					break;
+				}
+				case '%': {
+					out << '%';
+					break;
+				}
+				default:
+					out << '%' << *p;
+					break;
 			}
 		} else {
-			error_message.put(*p);
+			out.put(*p);
 		}
 	}
 
 	va_end(args);
 
-	// Append errno message if errno is set
 	if (errno != 0) {
-		error_message << ": { " << std::strerror(errno) << " }";
+		out << " [errno: " << errno << " - " << std::strerror(errno) << "]";
 	}
 
-	std::cerr << "Error: " << error_message.str() << "\n";
+	std::cerr << "⚠️ ERROR: " << out.str() << std::endl;
+#endif
 }
+
+#endif // UTILS_HPP
