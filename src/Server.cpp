@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <sys/socket.h>
 #include <csignal>
+#include "Response.hpp"
 
 Server::Server(const int port, const std::string& password) 
 	: _port(port), _password(password) {}
@@ -302,4 +303,64 @@ void Server::_sendResponse(std::string response, int fd)
 {
 	if(send(fd, response.c_str(), response.size(), 0) == -1)
 		std::cerr << "Response send() faild \n";
+}
+
+bool    Server::notregistered(int fd) {
+    (void) fd;
+    return (false);
+}
+
+void Server::getCmd(std::string& cmd, int fd)
+{
+	if (cmd.empty())
+		return;
+
+	const size_t firstNonSpace = cmd.find_first_not_of(" \t\v");
+	if (firstNonSpace != std::string::npos)
+		cmd.erase(0, firstNonSpace);
+
+	std::vector<std::string> tokens = splitCmd(cmd);
+	if (tokens.empty()) {
+		return ;
+	}
+
+	std::string command = tokens[0];
+	for (size_t i = 0; i < command.length(); ++i) {
+		command[i] = static_cast<char>(std::tolower(command[i]));
+	}
+
+	if (command == "bong")
+		return ;
+
+	if (command == "pass")
+		client_authen(fd, cmd);
+	else if (command == "nick")
+		set_nickname(cmd, fd);
+	else if (command == "user")
+		set_username(cmd, fd);
+	else if (command == "quit")
+		QUIT(cmd, fd);
+	else if (notregistered(fd))
+	{
+		if (command == "kick")
+			KICK(cmd, fd);
+		else if (command == "join")
+			JOIN(cmd, fd);
+		else if (command == "topic")
+			Topic(cmd, fd);
+		else if (command == "mode")
+			mode_command(cmd, fd);
+		else if (command == "part")
+			PART(cmd, fd);
+		else if (command == "privmsg")
+			PRIVMSG(cmd, fd);
+		else if (command == "invite")
+			Invite(cmd, fd);
+		else
+			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(), tokens[0]), fd);
+	}
+	else
+	{
+		_sendResponse(ERR_NOTREGISTERED("*"), fd);
+	}
 }

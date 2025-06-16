@@ -1,5 +1,5 @@
-#include "../inc/CommandHandler.hpp"
-#include "../inc/Response.hpp"
+#include "CommandHandler.hpp"
+#include "Response.hpp"
 
 // Commands getCmd(const char buf[MAX_BUF]) {
 //     if (!buf || std::strlen(buf) == 0) {
@@ -46,8 +46,8 @@ std::vector<std::string> splitReceivedBuffer(const std::string& str) {
 	return vec;
 }
 
-// std::vector<std::string> Server::splitCmd(std::string& cmd)
-std::vector<std::string> splitCmd(std::string& cmd)
+// std::vector<std::string> splitCmd(std::string& cmd)
+std::vector<std::string> Server::splitCmd(std::string& cmd)
 {
 	std::vector<std::string> vec;
 	std::istringstream stm(cmd);
@@ -58,61 +58,6 @@ std::vector<std::string> splitCmd(std::string& cmd)
 		token.clear();
 	}
 	return vec;
-}
-
-void Server::getCmd(std::string& cmd, int fd)
-{
-	if (cmd.empty())
-		return;
-
-	const size_t firstNonSpace = cmd.find_first_not_of(" \t\v");
-	if (firstNonSpace != std::string::npos)
-		cmd.erase(0, firstNonSpace);
-
-	std::vector<std::string> tokens = splitCmd(cmd);
-	if (tokens.empty()) {
-		return ;
-	}
-
-	std::string command = tokens[0];
-	for (size_t i = 0; i < command.length(); ++i) {
-		command[i] = static_cast<char>(std::tolower(command[i]));
-	}
-
-	if (command == "bong")
-		return ;
-
-	if (command == "pass")
-		client_authen(fd, cmd);
-	else if (command == "nick")
-		set_nickname(cmd, fd);
-	else if (command == "user")
-		set_username(cmd, fd);
-	else if (command == "quit")
-		QUIT(cmd, fd);
-	else if (notregistered(fd))
-	{
-		if (command == "kick")
-			KICK(cmd, fd);
-		else if (command == "join")
-			JOIN(cmd, fd);
-		else if (command == "topic")
-			Topic(cmd, fd);
-		else if (command == "mode")
-			mode_command(cmd, fd);
-		else if (command == "part")
-			PART(cmd, fd);
-		else if (command == "privmsg")
-			PRIVMSG(cmd, fd);
-		else if (command == "invite")
-			Invite(cmd, fd);
-		else
-			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(), tokens[0]), fd);
-	}
-	else
-	{
-		_sendResponse(ERR_NOTREGISTERED("*"), fd);
-	}
 }
 
 // Commands    getCmd(const char buf[Server::MAX_BUF]) {
