@@ -32,7 +32,7 @@ jobs:
             #   run: cppcheck --enable=all --inconclusive .
 
             - name: Build the project
-              run: make CXXFLAGS="-Wall -Wextra -Werror -std=c++98"
+              run: make CXXFLAGS="-Wall -Wextra -Werror -std=c++98 -I./inc"
 
             # - name: Run unit tests
             #   run: ./path/to/your/test/executable # Replace with the path to your test executable
