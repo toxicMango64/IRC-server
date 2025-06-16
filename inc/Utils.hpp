@@ -4,7 +4,7 @@
 
 // # include "Server.hpp"
 
-#include <atomic>
+// #include <atomic>
 #include <iostream>
 #include <sstream>
 #include <cstdarg>
@@ -41,8 +41,8 @@ bool validatePassword( const std::string& password );
 // Optional: Enable if you're not using C++20's std::format
 #define USE_SIMPLE_FORMATTER
 
-// Lock to avoid mangled logs from concurrent threads
-static std::mutex log_mutex;
+// // Lock to avoid mangled logs from concurrent threads
+// static std::mutex log_mutex;
 
 #if defined(_MSC_VER)
 #define COLD_FN __declspec(noinline)
