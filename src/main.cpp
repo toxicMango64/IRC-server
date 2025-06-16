@@ -13,9 +13,10 @@
 #include "../inc/Server.hpp"
 #include <csignal>
 #include <cstring>
+#include <cstdlib>
 #include <iostream>
 
-void Server::signalHandler(int signum) {
+__attribute__((__noreturn__)) void Server::signalHandler(int signum) {
 	if (signum == SIGINT) {
 		std::cerr << "\nCaught SIGINT (Ctrl+C). Stopping server...\n";
 		exit(0);
@@ -24,6 +25,9 @@ void Server::signalHandler(int signum) {
 		std::cerr << "\nCaught SIGQUIT (Ctrl+D). Stopping server...\n";
 		exit(0);
 	}
+	// Handle any unexpected signal
+	std::cerr << "\nCaught unexpected signal. Stopping server...\n";
+	exit(1);
 }
 
 int main(const int ac, const char *const *av) {
@@ -45,11 +49,11 @@ int main(const int ac, const char *const *av) {
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
 
-	if (sigaction(SIGINT, &act, nullptr) == -1) {
+	if (sigaction(SIGINT, &act, NULL) == -1) {
 		std::cerr << "Error setting SIGINT handler: " << std::strerror(errno) << std::endl;
 		return 1;
 	}
-	if (sigaction(SIGQUIT, &act, nullptr) == -1) {
+	if (sigaction(SIGQUIT, &act, NULL) == -1) {
 		std::cerr << "Error setting SIGQUIT handler: " << std::strerror(errno) << std::endl;
 		return 1;
 	}

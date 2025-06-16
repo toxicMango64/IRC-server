@@ -69,7 +69,7 @@ public:
 	static const char	buffer[MAX_BUF] __attribute__((aligned(16)));
 
 	bool				isValid( void ) const;
-	static void			signalHandler(int signum);
+	static void			signalHandler(int signum) __attribute__ ((__noreturn__));
 
 	Server();
 	~Server();
@@ -87,7 +87,6 @@ public:
 	void	handleClientMessage( size_t i, std::vector<pollfd>& fds );
 	void	handleNewConnection( int sFd, std::vector<pollfd>& fds );
 
-	// static bool	isBotfull;
 	int	GetPort( );
 	int	GetFd( );
 	const int&	getPort( ) const { return _port; }
@@ -123,7 +122,6 @@ public:
 	std::vector<std::string>	split_recivedBuffer( std::string str );
 	std::vector<std::string>	split_cmd( std::string &str );
 
-	bool BypassForBot( std::string cmd, int fd );
 	bool notregistered( int fd );
 	bool nickNameInUse( std::string& nickname );
 	bool is_validNickname( std::string& nickname );

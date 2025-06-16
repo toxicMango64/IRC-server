@@ -1,6 +1,7 @@
 #include "../inc/Server.hpp"
 #include <stdexcept>
 #include <sys/socket.h>
+#include <csignal>
 
 Server::Server(const int port, const std::string& password) 
 	: _port(port), _password(password) {}
