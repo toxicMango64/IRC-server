@@ -18,14 +18,14 @@ SRC :=	$(SRCDIR)main.cpp \
 		$(SRCDIR)Server.cpp \
 		$(SRCDIR)Utils.cpp \
 		$(SRCDIR)Channel.cpp \
-		$(CMDDIR)INVITE.cpp \
-		$(CMDDIR)JOIN.cpp \
-		$(CMDDIR)KICK.cpp \
-		$(CMDDIR)MODE.cpp \
-		$(CMDDIR)PART.cpp \
-		$(CMDDIR)PRIVMSG.cpp \
-		$(CMDDIR)QUIT.cpp \
-		$(CMDDIR)TOPIC.cpp
+		$(CMDDIR)invite.cpp \
+		$(CMDDIR)join.cpp \
+		$(CMDDIR)kick.cpp \
+		$(CMDDIR)mode.cpp \
+		$(CMDDIR)part.cpp \
+		$(CMDDIR)privmsg.cpp \
+		$(CMDDIR)quit.cpp \
+		$(CMDDIR)topic.cpp
 
 OBJ := $(patsubst %.cpp, $(ODIR)/%.o, $(SRC))
 

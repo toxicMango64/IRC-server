@@ -32,7 +32,7 @@
 #include "Client.hpp"
 #include "Channel.hpp"
 #include "CommandHandler.hpp"
-#include "Response.hpp"
+// #include "Response.hpp"
 
 // enum class e_irc : std::uint16_t {
 enum e_irc {
@@ -119,46 +119,47 @@ public:
 	void	reciveNewData( int fd );
 
 	void	getCmd( std::string &cmd, int fd );
-	std::vector<std::string>	split_recivedBuffer( std::string str );
-	std::vector<std::string>	split_cmd( std::string &str );
+	std::vector<std::string>	splitReceivedBuffer(const std::string& str);
+	std::vector<std::string>	splitCmd( std::string &str );
 
 	bool notregistered( int fd );
 	bool nickNameInUse( std::string& nickname );
-	bool is_validNickname( std::string& nickname );
+	// bool is_validNickname( std::string& nickname );
 	void client_authen( int fd, std::string pass );
 
-	void	JOIN( std::string cmd, int fd );
-	int		SplitJoin( std::vector<std::pair<std::string, std::string> > &token, std::string cmd, int fd );
-	void	ExistCh( std::vector<std::pair<std::string, std::string> >&token, int i, int j, int fd );
-	void	NotExistCh( std::vector<std::pair<std::string, std::string> >&token, int i, int fd );
-	int		SearchForClients( std::string nickname );
+	void	JOIN(const std::string& cmd, int fd);
+	int		SplitJoin(std::vector<std::pair<std::string, std::string> > &token, const std::string& cmd, int fd);
+	void	ExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, size_t j, int fd);
+	void	NotExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, int fd);
+	int		SearchForClients(const std::string& nickname);
 
-	void	PART( std::string cmd, int fd );
-	int		SplitCmdPart( std::string cmd, std::vector<std::string> &tmp, std::string &reason, int fd );
+	void	PART(const std::string& cmd, int fd);
+	int		SplitCmdPart(const std::string& cmd, std::vector<std::string> &tmp, std::string &reason, int fd);
 
-	void	KICK( std::string cmd, int fd );
-	std::string SplitCmdKick( std::string cmd, std::vector<std::string> &tmp, std::string &user, int fd );
+	void	KICK(const std::string &cmd, int fd);
+	std::string SplitCmdKick(const std::string &cmd, std::vector<std::string> &tmp, std::string &user, int fd);
 
-	void	PRIVMSG( std::string cmd, int fd );
+	void	PRIVMSG(const std::string& cmd, int fd);
 	void	CheckForChannels_Clients( std::vector<std::string> &tmp, int fd );
 
-	void	QUIT( std::string cmd, int fd );
+	void	QUIT(const std::string& cmd, int fd);
 
 	void 		mode_command( std::string& cmd, int fd );
-	std::string invite_only( Channel *channel, char opera, std::string chain );
-	std::string topicRestricted( Channel *channel ,char opera, std::string chain );
-	std::string password_mode( std::vector<std::string> splited, Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string& arguments );
-	std::string operator_privilege( std::vector<std::string> splited, Channel *channel, size_t& pos, int fd, char opera, std::string chain, std::string& arguments );
-	std::string channel_limit( std::vector<std::string> splited, Channel *channel, size_t &pos, char opera, int fd, std::string chain, std::string& arguments );
-	bool	isvalid_limit( std::string& limit );
-	std::string	mode_toAppend( std::string chain, char opera, char mode );
+	std::string invite_only(Channel* channel, char opera, const std::string& chain);
+	// std::string topicRestricted( Channel *channel ,char opera, std::string chain );
+	std::string topic_restriction(Channel* channel, char opera, const std::string& chain);
+	std::string password_mode(const std::vector<std::string>& tokens, Channel* channel, size_t& pos, char opera, int fd, const std::string& chain, std::string& arguments);
+	std::string operator_privilege(const std::vector<std::string>& tokens, Channel* channel, size_t& pos, int fd, char opera, const std::string& chain, std::string& arguments);
+	std::string channel_limit(const std::vector<std::string>& tokens, Channel* channel, size_t& pos, char opera, int fd, const std::string& chain, std::string& arguments);
+	bool	isvalid_limit(const std::string& limit);
+	std::string	mode_toAppend(const std::string& chain, char opera, char mode);
 	std::vector<std::string>	splitParams( std::string params );
-	void	getCmdArgs( std::string cmd,std::string& name, std::string& modeset ,std::string &params );
+	void	getCmdArgs(const std::string& cmd, std::string& name, std::string& modeset, std::string& params);
 
-	std::string tTopic(  );
 	void Topic( std::string &cmd, int &fd );
 	void Invite( std::string &cmd, int &fd );
-	std::string gettopic( std::string& input );
-	int getpos( std::string &cmd );
+	// std::string tTopic(  );
+	// std::string gettopic( std::string& input );
+	// int getpos( std::string &cmd );
 
 };

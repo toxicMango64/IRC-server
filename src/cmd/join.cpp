@@ -1,4 +1,5 @@
 #include "../../inc/Server.hpp"
+#include "../../inc/Response.hpp"
 
 int Server::SplitJoin(std::vector<std::pair<std::string, std::string> > &token, const std::string& cmd, int fd)
 {
@@ -74,7 +75,7 @@ int Server::SearchForClients(const std::string& nickname)
 {
     int count = 0;
     for (size_t i = 0; i < this->channels.size(); i++) {
-        if (this->channels[i].GetClientInChannel(nickname) != nullptr) {
+        if (this->channels[i].GetClientInChannel(nickname) != NULL) {
             count++;
         }
     }
@@ -92,9 +93,9 @@ bool IsInvited(Client* cli, std::string ChName, int flag)
     return false;
 }
 
-void Server::ExistCh(std::vector<std::pair<std::string, std::string>>& token, size_t i, size_t j, int fd)
+void Server::ExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, size_t j, int fd)
 {
-    if (this->channels[j].GetClientInChannel(GetClient(fd)->GetNickName()) != nullptr) {
+    if (this->channels[j].GetClientInChannel(GetClient(fd)->GetNickName()) != NULL) {
         return;
     }
 
@@ -159,7 +160,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >& token
 
 void Server::JOIN(const std::string& cmd, int fd)
 {
-    std::vector<std::pair<std::string, std::string >> token;
+    std::vector<std::pair<std::string, std::string > > token;
 
     if (!SplitJoin(token, cmd, fd)) {
         senderror(461, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Not enough parameters\r\n");
