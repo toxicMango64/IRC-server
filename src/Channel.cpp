@@ -1,6 +1,7 @@
 #include "../inc/Channel.hpp"
 #include <sys/socket.h>
 #include <sstream>
+#include <ctime>
 
 Channel::Channel( ) {
 	this->inviteOnly = 0;
@@ -46,7 +47,7 @@ void Channel::SetPassword(std::string password){this->password = password;}
 void Channel::SetName(std::string name){this->name = name;}
 void Channel::set_topicRestriction(bool value){this->topicRestricted = value;}
 void Channel::setModeAtindex(size_t index, bool mode){modes[index].second = mode;}
-void Channel::set_createiontime(){
+void Channel::set_createiontime() {
 	std::time_t _time = std::time(NULL);
 	std::ostringstream oss;
 	oss << _time;
