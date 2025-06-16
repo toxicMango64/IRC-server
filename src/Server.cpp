@@ -137,7 +137,7 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 		std::vector<std::string> cmd;
 		cmd = split_recivedBuffer(client->getBuffer());
 		for (size_t i = 0; i < cmd.size(); i++) {
-			this->parse_exec_cmd(cmd[i], clientFd);
+			this->getCmd(cmd[i], clientFd);
 		}
 		if (GetClient(clientFd)) {
 			GetClient(clientFd)->clearBuffer();

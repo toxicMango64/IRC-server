@@ -119,7 +119,7 @@ public:
 	void	set_sever_socket( );
 	void	reciveNewData( int fd );
 
-	void	parse_exec_cmd( std::string &cmd, int fd );
+	void	getCmd( std::string &cmd, int fd );
 	std::vector<std::string>	split_recivedBuffer( std::string str );
 	std::vector<std::string>	split_cmd( std::string &str );
 
