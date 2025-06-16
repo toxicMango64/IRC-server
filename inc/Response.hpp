@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string_view>
 
-// const char* CRLF = "\r\n";
 extern const std::string CRLF = "\r\n";
 
 inline std::string RPL_CONNECTED(const std::string& nickname) {

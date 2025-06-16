@@ -4,6 +4,9 @@
 
 // # include "Server.hpp"
 
+// In header file (e.g., Utils.hpp)
+// extern std::string CRLF;
+
 // #include <atomic>
 #include <iostream>
 #include <sstream>
