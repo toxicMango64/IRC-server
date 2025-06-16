@@ -5,19 +5,29 @@
 # ------------------------------- Configuration ------------------------------ #
 
 NAME        := ircserv
-SRCDIR      := src/
-ODIR        := obj/
+ODIR        := obj
 SANITIZED_FLAG := .sanitized
 
+SRCDIRS := src cmd
+SRCDIR	:= src/
+CMDDIR	:= ${SRCDIR}cmd/
 INC	:=	./inc
 SRC :=	$(SRCDIR)main.cpp \
-    	$(SRCDIR)Client.cpp \
-    	$(SRCDIR)CommandHandler.cpp \
-    	$(SRCDIR)Server.cpp \
-    	$(SRCDIR)Utils.cpp \
-    	$(SRCDIR)Channel.cpp
+		$(SRCDIR)Client.cpp \
+		$(SRCDIR)CommandHandler.cpp \
+		$(SRCDIR)Server.cpp \
+		$(SRCDIR)Utils.cpp \
+		$(SRCDIR)Channel.cpp \
+		$(CMDDIR)INVITE.cpp \
+		$(CMDDIR)JOIN.cpp \
+		$(CMDDIR)KICK.cpp \
+		$(CMDDIR)MODE.cpp \
+		$(CMDDIR)PART.cpp \
+		$(CMDDIR)PRIVMSG.cpp \
+		$(CMDDIR)QUIT.cpp \
+		$(CMDDIR)TOPIC.cpp
 
-OBJ := $(patsubst %.cpp, $(ODIR)%.o, $(notdir $(SRC)))
+OBJ := $(patsubst %.cpp, $(ODIR)/%.o, $(SRC))
 
 # ------------------------------ Compilation Flags --------------------------- #
 
@@ -45,8 +55,8 @@ CXX := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v cla
 
 # CPU core detection
 ifeq ($(UNAME), Darwin)
-    CXX := c++
-    NUMPROC := $(shell sysctl -n hw.ncpu)
+	CXX := c++
+	NUMPROC := $(shell sysctl -n hw.ncpu)
 else ifeq ($(UNAME), Linux) # Detect best available compiler
 # CXX := $(shell \
 # 	for bin in clang++-20 clang++-19 clang++-18 clang++-17 clang++ g++-13 g++-12 g++ ; do \
@@ -96,11 +106,14 @@ CXXFLAGS += $(DEBUGFLAGS) $(STDFLAG)
 $(NAME): $(OBJ)
 	@$(CXX) $(CXXFLAGS) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $(NAME)
 
+# Automatically create necessary object directories before compilation
+OBJDIRS := $(sort $(dir $(OBJ)))
 PHONY	+= prepare
 prepare:
-	@mkdir -p $(ODIR)
+	@mkdir -p $(sort $(dir $(OBJ)))
 
-$(ODIR)%.o: $(SRCDIR)%.cpp | prepare buildinfo
+# $(ODIR)%.o: $(SRCDIR)%.cpp | prepare buildinfo
+$(ODIR)/%.o: %.cpp | prepare buildinfo
 	@mkdir -p $(dir $@)
 	@printf "$(L_BLUE)  [info]:  $(L_GREEN)%-30s -> $(L_BLUE)%s$(RESET)\n" "$<" "$@"
 	@$(CXX) -c $(CFLAGS) $(CXXFLAGS) $< -o $@
