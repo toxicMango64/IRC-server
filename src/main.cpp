@@ -11,17 +11,16 @@
 */
 
 #include "../inc/Server.hpp"
-#include "../inc/Server.hpp"
 #include <csignal>
 #include <cstring>
 #include <iostream>
 
-void signalHandler(int signal) {
-	if (signal == SIGINT) {
+void Server::signalHandler(int signum) {
+	if (signum == SIGINT) {
 		std::cerr << "\nCaught SIGINT (Ctrl+C). Stopping server...\n";
 		exit(0);
 	} 
-	else if (signal == SIGQUIT) {
+	else if (signum == SIGQUIT) {
 		std::cerr << "\nCaught SIGQUIT (Ctrl+D). Stopping server...\n";
 		exit(0);
 	}
@@ -40,15 +39,12 @@ int main(const int ac, const char *const *av) {
 	}
 
 	Server server(port, av[2]);
-
+	
 	struct sigaction act;
-
-	// Set up signal handler
-	act.sa_handler = signalHandler;
+	act.sa_handler = Server::signalHandler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
 
-	// Register the signal handler for SIGINT (Ctrl+C) and SIGQUIT (Ctrl+D)
 	if (sigaction(SIGINT, &act, nullptr) == -1) {
 		std::cerr << "Error setting SIGINT handler: " << std::strerror(errno) << std::endl;
 		return 1;
@@ -68,11 +64,13 @@ int main(const int ac, const char *const *av) {
 		server.run(sFd);
 
 	} catch (const std::exception& e) {
-		std::cerr << "Error: " << e.what() << "\n";
-		return (server.closeFds(), 1);
+		logError("Exception caught: %s", e.what());
+		server.closeFds();
+		return (1);
 	} catch (const int& errnum) {
-		std::cerr << "Error: " << std::strerror(errnum) << "\n";
-		return (server.closeFds(), errnum);
+		logError("Caught error code: %d (%s)", errnum, std::strerror(errnum));
+		server.closeFds();
+		return (errnum);
 	}
 
 	return (0);
