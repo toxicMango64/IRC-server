@@ -60,3 +60,14 @@ void Client::SetUsername(std::string& username){this->username = username; }
 void Client::setBuffer(std::string recived){buffer += recived; }
 void Client::setRegistered(bool value){registered = value; }
 void Client::setIpAdd(std::string ipadd){this->ipadd = ipadd; }
+
+void Client::clearBuffer() { buffer.clear(); }
+void Client::AddChannelInvite( std::string &chname ) {
+	ChannelsInvite.push_back( chname );
+}
+void Client::RmChannelInvite( std::string &chname ) {
+	for (size_t i = 0; i < this->ChannelsInvite.size(); i++) {
+		if (this->ChannelsInvite[i] == chname)
+			{this->ChannelsInvite.erase(this->ChannelsInvite.begin() + i); return;}
+	}
+}
