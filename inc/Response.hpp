@@ -4,7 +4,10 @@
 #include <iostream>
 #include <string_view>
 
-extern const std::string CRLF = "\r\n";
+#ifndef CRLF
+# define CRLF "\r\n";
+#endif 
+// extern const std::string CRLF = "\r\n";
 
 inline std::string RPL_CONNECTED(const std::string& nickname) {
     return ": 001 " + std::string(nickname) + " :Welcome to the IRC server!" + CRLF;

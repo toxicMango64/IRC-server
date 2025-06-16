@@ -1,11 +1,6 @@
 // Server.hpp
 #pragma once
 
-#include <stdexcept>
-#include <stdint.h>
-#include <iostream>
-#include "Utils.hpp"
-
 #if defined(_MSC_VER)
   #ifdef BUILDING_MYLIB
     #define EXPORT __declspec(dllexport)
@@ -17,6 +12,11 @@
 #else
   #define EXPORT
 #endif
+
+#include <stdexcept>
+#include <stdint.h>
+#include <iostream>
+#include "Utils.hpp"
 
 #include <cstring>
 #include <map>
@@ -32,7 +32,6 @@
 #include "Client.hpp"
 #include "Channel.hpp"
 #include "CommandHandler.hpp"
-// #include "Response.hpp"
 
 // enum class e_irc : std::uint16_t {
 enum e_irc {
@@ -40,10 +39,6 @@ enum e_irc {
 	MAX_PORT = 65535,
 	MAX_INT_INDEX = 10
 };
-
-// #include <stdio.h>
-
-// #define welcome(server) printf("welcome to {%s}, hope you enjoy your time here\n", server);
 
 class Client;
 class Channel;
@@ -113,13 +108,12 @@ public:
 	void	senderror( int code, std::string clientname, std::string channelname, int fd, std::string msg );
 	void	_sendResponse( std::string response, int fd );
 
-	void	init( int port, std::string pass );
-	void	accept_new_client( );
-	void	set_sever_socket( );
-	void	reciveNewData( int fd );
+	// void	init( int port, std::string pass );
+	// void	accept_new_client( );
+	// void	set_sever_socket( );
+	// void	reciveNewData( int fd );
 
 	void	getCmd( std::string &cmd, int fd );
-	std::vector<std::string>	splitReceivedBuffer(const std::string& str);
 	std::vector<std::string>	splitCmd( std::string &str );
 
 	bool notregistered( int fd );
