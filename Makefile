@@ -15,8 +15,7 @@ SRC :=	$(SRCDIR)main.cpp \
     	$(SRCDIR)CommandHandler.cpp \
     	$(SRCDIR)Server.cpp \
     	$(SRCDIR)Utils.cpp \
-    	$(SRCDIR)Channel.cpp \
-    	$(SRCDIR)Player.cpp
+    	$(SRCDIR)Channel.cpp
 
 OBJ := $(patsubst %.cpp, $(ODIR)%.o, $(notdir $(SRC)))
 
