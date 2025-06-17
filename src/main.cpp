@@ -68,11 +68,11 @@ int main(const int ac, const char *const *av) {
 		server.run(sFd);
 
 	} catch (const std::exception& e) {
-		logError("Exception caught: %s", e.what());
+		logMsg("Exception caught: %s", e.what());
 		server.closeFds();
 		return (1);
 	} catch (const int& errnum) {
-		logError("Caught error code: %d (%s)", errnum, std::strerror(errnum));
+		logMsg("Caught error code: %d (%s)", errnum, std::strerror(errnum));
 		server.closeFds();
 		return (errnum);
 	}

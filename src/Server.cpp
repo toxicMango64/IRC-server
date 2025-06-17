@@ -96,7 +96,7 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
 		throw std::runtime_error("Failed to store new client: " + std::string(e.what()));
 	}
 
-	logError("New client connected, FD: {%i}", clientFd);
+	logMsg("New client connected, FD: {%i}", clientFd);
 	
 	const std::string welcome = ":ircserv 001 client :Welcome to ft_irc\r\n";
 	ssize_t bytesSent = send(clientFd, welcome.c_str(), welcome.length(), 0);
@@ -104,7 +104,7 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
 		throw std::runtime_error("Failed to send welcome message to client");
 	}
 	
-	logError("Welcome message sent to client FD: {%i}", clientFd);
+	logMsg("Welcome message sent to client FD: {%i}", clientFd);
 }
 
 void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
@@ -116,7 +116,7 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 	ssize_t bytesRead = recv(clientFd, buffer, MAX_BUF, 0);
 	if (bytesRead <= 0) {
 		if (bytesRead == 0) {
-			logError("Client disconnected, fd: {%i}", clientFd);
+			logMsg("Client disconnected, fd: {%i}", clientFd);
 			RmChannels(clientFd);
 			RemoveClient(clientFd);
 			RemoveFds(clientFd);
@@ -128,13 +128,13 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 		connectedClients.erase(clientFd);
 	} else {
 		// Handle the received message here
-		logError("Received from client fd: {%i} : {%s}", clientFd, buffer);
+		logMsg("Received from client fd: {%i} : {%s}", clientFd, buffer);
 
 		// Process the message
 		Client *client = GetClient(clientFd);
 
         if (!client) {
-            logError("Client was not found or something");
+            logMsg("Client was not found or something");
             return ;
         }
 		client->setBuffer(buffer);
@@ -173,7 +173,7 @@ void Server::run(int sFd) {
 	signal(SIGQUIT, Server::SignalHandler);
 	signal(SIGPIPE, SIG_IGN); // or MSG_NOSIGNAL flag in send() to ignore SIGPIPE on linux systems
 
-	logError("Server started on port: {%i}", _port);
+	logMsg("Server started on port: {%i}", _port);
 	
 	while (Server::Signal == false) { // nuha's signal addition goes here as condition
 
@@ -329,8 +329,11 @@ void Server::getCmd(std::string& cmd, int fd)
 
 	if (command == "bong")
 		return ;
-
-	if (command == "pass")
+    else if (command == "cap"){
+        std::cout << "Capability negotiation in progress" << std::endl;
+        _sendResponse("CAP * LS :", fd);
+    }
+	else if (command == "pass")
 		client_authen(fd, cmd);
 	else if (command == "nick")
 		set_nickname(cmd, fd);

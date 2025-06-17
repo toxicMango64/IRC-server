@@ -55,7 +55,7 @@ bool validatePassword( const std::string& password );
 #define COLD_FN
 #endif
 
-COLD_FN inline void logError(const char* format, ...) {
+COLD_FN inline void logMsg(const char* format, ...) {
 #if DEBUG_MODE
 
 	if (!format) return;
@@ -109,7 +109,7 @@ COLD_FN inline void logError(const char* format, ...) {
 		out << " [errno: " << errno << " - " << std::strerror(errno) << "]";
 	}
 
-	std::cerr << "⚠️ ERROR: " << out.str() << std::endl;
+	std::cerr << "[DEBUG]: " << out.str() << std::endl;
 #endif
 }
 
