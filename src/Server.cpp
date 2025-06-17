@@ -91,6 +91,7 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
 
 	try {
 		connectedClients.insert(std::make_pair(clientFd, Client(clientFd)));
+        AddClient(Client(clientFd));
 	} catch (const std::exception& e) {
 		throw std::runtime_error("Failed to store new client: " + std::string(e.what()));
 	}
@@ -132,6 +133,10 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 		// Process the message
 		Client *client = GetClient(clientFd);
 
+        if (!client) {
+            logError("Client was not found or something");
+            return ;
+        }
 		client->setBuffer(buffer);
 		if (client->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return ;
@@ -175,8 +180,6 @@ void Server::run(int sFd) {
 		int pollRet = poll(fds.data(), fds.size(), -1);
 		
 		if ( -1 == pollRet && Server::Signal == false ) {
-			continue ;
-		} else {
 			throw (std::runtime_error("Poll failed: " + std::string(strerror(errno))));
 		}
 
