@@ -308,11 +308,6 @@ void Server::_sendResponse(std::string response, int fd)
 		std::cerr << "Response send() faild \n";
 }
 
-bool    Server::notregistered(int fd) {
-    (void) fd;
-    return (false);
-}
-
 void Server::getCmd(std::string& cmd, int fd)
 {
 	if (cmd.empty())
@@ -343,7 +338,7 @@ void Server::getCmd(std::string& cmd, int fd)
 		set_username(cmd, fd);
 	else if (command == "quit")
 		QUIT(cmd, fd);
-	else if (notregistered(fd))
+	else if (GetClient(fd)->getRegistered())
 	{
 		if (command == "kick")
 			KICK(cmd, fd);
