@@ -56,11 +56,6 @@ ifeq ($(UNAME), Darwin)
 	CXX := c++
 	NUMPROC := $(shell sysctl -n hw.ncpu)
 else ifeq ($(UNAME), Linux) # Detect best available compiler
-# CXX := $(shell \
-# 	for bin in clang++-20 clang++-19 clang++-18 clang++-17 clang++ g++-13 g++-12 g++ ; do \
-# 		if command -v $$bin >/dev/null 2>&1; then echo $$bin; break; fi; \
-# 	done \
-# )
 	NUMPROC := $(shell grep -c ^processor /proc/cpuinfo)
 else
 	$(error Unsupported OS: $(UNAME))
