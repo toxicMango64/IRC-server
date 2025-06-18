@@ -1,9 +1,11 @@
-#include "Server.hpp"
-#include <stdexcept>
-#include <sys/socket.h>
 #include <csignal>
-#include "Response.hpp"
+#include <netinet/tcp.h> // For SO_LINGER
+#include <stdexcept>
 #include <stdlib.h>
+#include <sys/socket.h>
+
+#include "Response.hpp"
+#include "Server.hpp"
 
 Server::Server(const int port, const std::string& password) 
 	: _port(port), _password(password)
@@ -44,16 +46,24 @@ bool Server::isValid() const {
 	return (_port >= MIN_PORT && _port <= MAX_PORT) && !_password.empty();
 }
 
-void	Server::closeFds(){
-	for (size_t i = 0; i < clients.size(); i++){
-		std::cout << "Client <" << clients[i].GetFd() << "> Disconnected \n";
-		close(clients[i].GetFd());
-	}
-	if (sfds != -1){	
-		std::cout << "Server <" << sfds << "> Disconnected \n";
-		close(sfds);
-	}
+
+void Server::closeFds() {
+    struct linger linger_opt = { .l_onoff = 1, .l_linger = 0 }; // Hard close
+
+    // Close clients
+    for (size_t i = 0; i < clients.size(); i++) {
+        setsockopt(clients[i].GetFd(), SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
+        close(clients[i].GetFd());
+        std::cout << "Client <" << clients[i].GetFd() << "> Disconnected \n";
+    }
+    
+    // Close server socket
+    if (sfds != -1) {
+        close(sfds);
+        std::cout << "Server <" << sfds << "> Disconnected \n";
+    }
 }
+
 
 // wrapper funciton for socket
 int Server::createSocket() {
@@ -78,6 +88,10 @@ void Server::bindSocket(int sFd) {
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port = htons(this->_port);
 
+    int yes = 1;
+    if (setsockopt(sFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
+        throw std::runtime_error("Failed to set SO_REUSEADDR");
+    }
 	if (bind(sFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1) {
 		throw std::runtime_error("Failed to bind socket:");
 	}
