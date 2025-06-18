@@ -205,7 +205,10 @@ void Server::run(int sFd) {
 
 		int pollRet = poll(fds.data(), fds.size(), -1);
 		
-		if ( -1 == pollRet && Server::_signalRecvd == false ) {
+		if (pollRet == -1) {
+            if (errno == EINTR && Server::_signalRecvd) {
+                break;
+            }
 			throw (std::runtime_error("Poll failed: " + std::string(strerror(errno))));
 		}
 
