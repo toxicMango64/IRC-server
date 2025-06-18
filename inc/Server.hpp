@@ -37,7 +37,6 @@
 enum e_irc {
 	MIN_PORT = 0,
 	MAX_PORT = 65535,
-	MAX_INT_INDEX = 10
 };
 
 class Client;
@@ -48,7 +47,7 @@ private:
 	// static const int MAX_BUF = 512;
 	int _port;
 	std::string _password;
-	static bool Signal;
+	static bool _signalRecvd;
 
 	int							sfds;
 	std::map<int, Client>		connectedClients;
@@ -64,7 +63,7 @@ public:
 	static const char	buffer[MAX_BUF] __attribute__((aligned(16)));
 
 	bool				isValid( void ) const;
-	static void			signalHandler(int signum) __attribute__ ((__noreturn__));
+	static void			signalHandler(int signum);
 
 	Server();
 	~Server();
@@ -74,7 +73,6 @@ public:
 
 	void	run( int sFd );
 	void	closeFds( void ); /** implement the fucntion */
-	static void SignalHandler( int signum );
 	int		createSocket( void );
 	void	bindSocket( int sFd );
 	int		setNonBlocking( int fd );
@@ -116,7 +114,6 @@ public:
 	void	getCmd( std::string &cmd, int fd );
 	std::vector<std::string>	splitCmd( std::string &str );
 
-	bool notregistered( int fd );
 	bool nickNameInUse( std::string& nickname );
 	// bool is_validNickname( std::string& nickname );
 	void client_authen( int fd, std::string pass );

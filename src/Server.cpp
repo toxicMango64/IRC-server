@@ -1,18 +1,51 @@
-#include "../inc/Server.hpp"
+#include "Server.hpp"
 #include <stdexcept>
 #include <sys/socket.h>
 #include <csignal>
 #include "Response.hpp"
+#include <stdlib.h>
 
 Server::Server(const int port, const std::string& password) 
-	: _port(port), _password(password) {}
+	: _port(port), _password(password)
+{
+	// struct sigaction act;
+	// act.sa_handler = Server::signalHandler;
+	// sigemptyset(&act.sa_mask);
+	// act.sa_flags = 0;
+
+	// if (sigaction(SIGINT, &act, NULL) == -1) {
+	// 	std::cerr << "Error setting SIGINT handler: " << std::strerror(errno) << std::endl;
+	// 	throw (std::runtime_error("Error setting SIGINT handler"));
+	// }
+	// if (sigaction(SIGQUIT, &act, NULL) == -1) {
+	// 	std::cerr << "Error setting SIGQUIT handler: " << std::strerror(errno) << std::endl;
+	// 	throw (std::runtime_error("Error setting SIGQUIT handler"));
+	// }
+}
+
+bool Server::_signalRecvd = false;
+
+void Server::signalHandler(int signum) {
+	if (signum == SIGINT) {
+		std::cerr << "\nCaught SIGINT (Ctrl+C). Stopping server...\n";
+	} 
+	else if (signum == SIGQUIT) {
+		std::cerr << "\nCaught SIGQUIT (Ctrl+D). Stopping server...\n";
+	}
+    else {
+        // Handle any unexpected signal
+        std::cerr << "\nCaught unexpected signal. Stopping server...\n";
+    }
+    _signalRecvd = true;
+    // exit(1);
+}
 
 bool Server::isValid() const {
 	return (_port >= MIN_PORT && _port <= MAX_PORT) && !_password.empty();
 }
 
 void	Server::closeFds(){
-	for(size_t i = 0; i < clients.size(); i++){
+	for (size_t i = 0; i < clients.size(); i++){
 		std::cout << "Client <" << clients[i].GetFd() << "> Disconnected \n";
 		close(clients[i].GetFd());
 	}
@@ -34,19 +67,7 @@ int Server::createSocket() {
 // wrapper funciton for fcntl
 // gets the current flags of the file descriptor and sets them to non blocking
 int Server::setNonBlocking(int fd) {
-	int flags = fcntl(fd, F_GETFL, 0);
-	if (flags == -1) {
-		return (-1);
-	}
-	
-	flags |= O_NONBLOCK;
-	
-	int ret = fcntl(fd, F_SETFL, flags);
-	if (ret == -1) {
-		return (-1);
-	}
-	
-	return (0);
+	return (fcntl(fd, F_SETFL, O_NONBLOCK));
 }
 
 // wrapper funciton for fcntl
@@ -69,7 +90,6 @@ void Server::startListening(int sFd) {
 }
 
 void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
-	Client cli;
 	sockaddr_in clientAddr;
 	std::memset(&clientAddr, 0, sizeof(clientAddr));
 	socklen_t addrLen = sizeof(clientAddr);
@@ -152,14 +172,6 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 	}
 }
 
-bool Server::Signal = false;
-void Server::SignalHandler(int signum)
-{
-	(void)signum;
-	std::cout << std::endl << "Signal Received! \n";
-	Server::Signal = true;
-}
-
 void Server::run(int sFd) {
 	std::vector<pollfd> fds;
 	
@@ -169,17 +181,17 @@ void Server::run(int sFd) {
 	serverPoll.revents = 0;
 	fds.push_back(serverPoll);
 
-	signal(SIGINT, Server::SignalHandler);
-	signal(SIGQUIT, Server::SignalHandler);
+	signal(SIGINT, Server::signalHandler);
+	signal(SIGQUIT, Server::signalHandler);
 	signal(SIGPIPE, SIG_IGN); // or MSG_NOSIGNAL flag in send() to ignore SIGPIPE on linux systems
 
 	logMsg("Server started on port: {%i}", _port);
 	
-	while (Server::Signal == false) { // nuha's signal addition goes here as condition
+	while (Server::_signalRecvd == false) {
 
 		int pollRet = poll(fds.data(), fds.size(), -1);
 		
-		if ( -1 == pollRet && Server::Signal == false ) {
+		if ( -1 == pollRet && Server::_signalRecvd == false ) {
 			throw (std::runtime_error("Poll failed: " + std::string(strerror(errno))));
 		}
 
@@ -193,6 +205,8 @@ void Server::run(int sFd) {
 			}
 		}
 	}
+    closeFds();
+    std::cout << "Closing file descriptors" << std::endl;
 }
 
 Server::Server( ) { this->sfds = -1; }
