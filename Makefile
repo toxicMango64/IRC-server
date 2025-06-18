@@ -33,7 +33,7 @@ OBJ := $(patsubst %.cpp, $(ODIR)/%.o, $(SRC))
 
 CXXFLAGS	+= -Wall -Wextra -Werror -I$(INC)
 STDFLAG		:= -std=c++98
-SANITIZE	:= -fsanitize=address
+SANITIZE	:= # -fsanitize=address
 LDFLAGS		:=
 CFLAGS		:= # -stdlib=libstdc++ # -fno-rtti
 DEBUGFLAGS	:=
@@ -49,20 +49,18 @@ SHIFT  = $(eval O=$(shell echo $$((($(O)%15)+1))))
 
 UNAME := $(shell uname -s)
 NUMPROC :=
-CXX :=
-
-CXX := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v clang++-$(v)),clang++-$(v))))
+CXX := $(firstword $(foreach v,$(shell seq 21 -1 10),$(if $(shell command -v clang++-$(v)),clang++-$(v))))
 
 # CPU core detection
 ifeq ($(UNAME), Darwin)
 	CXX := c++
 	NUMPROC := $(shell sysctl -n hw.ncpu)
 else ifeq ($(UNAME), Linux) # Detect best available compiler
-	CXX := $(shell \
-		for bin in clang++-20 clang++-19 clang++-18 clang++-17 clang++ g++-13 g++-12 g++ ; do \
-			if command -v $$bin >/dev/null 2>&1; then echo $$bin; break; fi; \
-		done \
-	)
+# CXX := $(shell \
+# 	for bin in clang++-20 clang++-19 clang++-18 clang++-17 clang++ g++-13 g++-12 g++ ; do \
+# 		if command -v $$bin >/dev/null 2>&1; then echo $$bin; break; fi; \
+# 	done \
+# )
 	NUMPROC := $(shell grep -c ^processor /proc/cpuinfo)
 else
 	$(error Unsupported OS: $(UNAME))
