@@ -1,8 +1,13 @@
 #include "../inc/Client.hpp"
 
 Client::Client(int fd): fd(fd) {
-    isOperator = false;
-    state = UNAUTHENTICATED;
+	this->nickname = "";
+	this->username = "";
+	this->isOperator= false;
+	this->registered = false;
+	this->buffer = "";
+	this->ipadd = "";
+	this->logedin = false;
 }
 
 Client::Client() {
