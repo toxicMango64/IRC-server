@@ -156,16 +156,20 @@ void Server::client_authen(int fd, std::string cmd)
 		_sendResponse(ERR_ALREADYREGISTERED(GetClient(fd)->GetNickName()), fd);
 }
 
-// bool Server::is_validNickname(std::string& nickname) {
-static bool is_validNickname(std::string& nickname) {
-		
-	if (!nickname.empty() && (nickname[0] == '&' || nickname[0] == '#' || nickname[0] == ':'))
-		return false;
-	for(size_t i = 1; i < nickname.size(); i++) {
-		if(!std::isalnum(nickname[i]) && nickname[i] != '_')
-			return false;
-	}
-	return true;
+bool isValidNickname(const std::string& nickname) {
+    if (nickname.empty() || nickname.length() > 9) {
+        return false;
+    }
+    // Nicknames must start with a letter and can contain letters, numbers, and specific symbols, alphanumeric in short
+    if (!std::isalpha(nickname[0])) {
+        return false;
+    }
+    for (size_t i = 1; i < nickname.length(); ++i) {
+        if (!std::isalnum(nickname[i]) && nickname[i] != '-' && nickname[i] != '[' && nickname[i] != ']' && nickname[i] != '\\' && nickname[i] != '`' && nickname[i] != '^' && nickname[i] != '{' && nickname[i] != '}') {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool Server::nickNameInUse(std::string& nickname) {
@@ -200,7 +204,7 @@ void Server::set_nickname(std::string cmd, int fd) {
 	    _sendResponse(ERR_NICKINUSE(std::string(cmd)), fd); 
 		return ;
 	}
-	if(!is_validNickname(cmd)) {
+	if(!isValidNickname(cmd)) {
 		_sendResponse(ERR_ERRONEUSNICK(std::string(cmd)), fd);
 		return ;
 	}
@@ -219,6 +223,8 @@ void Server::set_nickname(std::string cmd, int fd) {
 					cli->setLogedin(true);
 					_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
 					_sendResponse(RPL_NICKCHANGE(cli->GetNickName(),cmd), fd);
+					// logMsg("set nickname function within the else conditon: {%s}", cmd.c_str());
+					// JOIN(cli->GetNickName(), fd);
 				}
 				else {
 					_sendResponse(RPL_NICKCHANGE(oldnick,cmd), fd);
@@ -234,6 +240,8 @@ void Server::set_nickname(std::string cmd, int fd) {
 	if(cli && cli->getRegistered() && !cli->GetUserName().empty() && !cli->GetNickName().empty() && cli->GetNickName() != "*" && !cli->GetLogedIn()) {
 		cli->setLogedin(true);
 		_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
+		// logMsg("set nickname function: {%s}", cmd.c_str());
+		// JOIN(cli->GetNickName(), fd);
 	}
 }
 
@@ -243,6 +251,7 @@ void	Server::set_username(std::string& cmd, int fd)
 
 	Client *cli = GetClient(fd); 
 	if((cli && splited_cmd.size() < 5)) {
+		std::cerr << "something happened" << std::endl;
 		_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd);
 		return;
 	}
@@ -260,5 +269,7 @@ void	Server::set_username(std::string& cmd, int fd)
 	{
 		cli->setLogedin(true);
 		_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
+		// logMsg("setUserName fucntion: {%s} {%s}", cmd.c_str(), cli->GetNickName().c_str());
+		// JOIN(cli->GetNickName(), fd);
 	}
 }
