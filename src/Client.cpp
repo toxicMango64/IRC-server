@@ -1,8 +1,12 @@
 #include "../inc/Client.hpp"
 
 Client::Client(int fd): fd(fd) {
-    isOperator = false;
-    state = UNAUTHENTICATED; // Initialize state
+	this->nickname = "";
+	this->username = "";
+	this->isOperator= false;
+	this->state = UNAUTHENTICATED; // Initialize state
+	this->buffer = "";
+	this->ipadd = "";
 }
 
 Client::Client() {
@@ -20,7 +24,7 @@ Client::~Client( ) { }
 Client::Client( Client const &src ) { *this = src; }
 
 Client &Client::operator=(Client const &src){
-	if (this != &src){
+	if (this != &src) {
 		this->nickname = src.nickname;
 		this->username = src.username;
 		this->fd = src.fd;
@@ -51,6 +55,10 @@ std::string Client::getHostname( ) {
 	return hostname;
 }
 
+const std::set<std::string>& Client::GetJoinedChannels() const {
+    return channels;
+}
+
 void Client::SetFd( int fd ) { this->fd = fd; }
 void Client::SetNickname( std::string& nickName ) { this->nickname = nickName; }
 void Client::SetUsername(std::string& username){this->username = username; }
@@ -61,7 +69,7 @@ void Client::setBuffer(std::string recived){
         std::cerr << "Client buffer overflow prevented. Disconnecting client (FD: " << fd << ").\n";
         // In a real scenario, you would signal the server to disconnect this client.
         // For now, just clearing the buffer to prevent a crash.
-        return;
+        return ;
     }
     buffer += recived;
 }

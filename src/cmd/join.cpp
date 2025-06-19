@@ -89,7 +89,7 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >& token, s
         return;
     }
 
-    if (SearchForClients(GetClient(fd)->GetNickName()) >= 10) {
+    if (GetClient(fd)->GetJoinedChannels().size() >= 10) {
         senderror(405, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You have joined too many channels\r\n");
         return;
     }
@@ -102,13 +102,13 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >& token, s
     }
 
     if (this->channels[j].GetInvitOnly()) {
-        if (!IsInvited(GetClient(fd), token[i].first, 1)) {
+        if (this->channels[j].GetInvitOnly() && !IsInvited(GetClient(fd), token[i].first, 1)) {
             senderror(473, GetClient(fd)->GetNickName(), "#" + token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+i)\r\n");
             return;
         }
     }
 
-    if (this->channels[j].GetLimit() && this->channels[j].GetClientsNumber() >= this->channels[j].GetLimit()) {
+    if (this->channels[j].GetLimit() != 0 && this->channels[j].GetClientsNumber() >= this->channels[j].GetLimit()) {
         senderror(471, GetClient(fd)->GetNickName(), "#" + token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+l)\r\n");
         return;
     }
@@ -132,7 +132,7 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >& token, s
 
 void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, int fd)
 {
-    if (SearchForClients(GetClient(fd)->GetNickName()) >= 10) {
+    if (GetClient(fd)->GetJoinedChannels().size() >= 10) {
         senderror(405, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You have joined too many channels\r\n");
         return;
     }

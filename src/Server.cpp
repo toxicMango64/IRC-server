@@ -80,7 +80,7 @@ void Server::bindSocket(int sFd) {
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port = htons(this->_port);
 
-	if (bind(sFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1) {
+        if (bind(sFd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) == -1) {
 		throw std::runtime_error("Failed to bind socket:");
 	}
 }
@@ -97,7 +97,7 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
 	std::memset(&clientAddr, 0, sizeof(clientAddr));
 	socklen_t addrLen = sizeof(clientAddr);
 
-	int clientFd = accept(sFd, (struct sockaddr*)&clientAddr, &addrLen);
+        int clientFd = accept(sFd, reinterpret_cast<struct sockaddr*>(&clientAddr), &addrLen);
 	if (clientFd == -1) {
 		throw std::runtime_error("Failed to accept new connection: " + std::string(strerror(errno)));
 	}
@@ -153,12 +153,9 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 		logMsg("Received from client fd: {%i} : {%s}", clientFd, buffer);
 
 		// Process the message
-		Client *client = GetClient(clientFd);
-
-        if (!client) {
-            logMsg("Client was not found or something");
-            return ;
-        }
+        Client *client = getClientOrReturn(clientFd);
+        if (!client)
+            return;
 		client->setBuffer(buffer);
 		if (client->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return ;
@@ -395,7 +392,7 @@ int Server::SearchForClients(const std::string& nickname){
 
 void Server::client_authen(int fd, std::string pass)
 {
-	Client *client = GetClient(fd);
+	Client *client = getClientOrReturn(fd);
 	if (!client)
 		return;
 	
@@ -421,7 +418,7 @@ void Server::client_authen(int fd, std::string pass)
 
 void Server::set_nickname(std::string cmd, int fd)
 {
-	Client *client = GetClient(fd);
+	Client *client = getClientOrReturn(fd);
 	if (!client)
 		return;
 
@@ -445,18 +442,14 @@ void Server::set_nickname(std::string cmd, int fd)
 	client->SetNickname(newNickname);
 	logMsg("Client FD: {%i} nickname set to: {%s}", fd, newNickname.c_str());
 
-	if (!client->GetUserName().empty() && client->getState() == AUTHENTICATED) { // Use new state
-		client->setState(REGISTERED); // Set state to REGISTERED
-		_sendResponse(RPL_WELCOME(client->GetNickName(), client->GetUserName()), fd);
-		_sendResponse(RPL_YOURHOST(client->GetNickName()), fd);
-		_sendResponse(RPL_CREATED(client->GetNickName()), fd);
-		_sendResponse(RPL_MYINFO(client->GetNickName()), fd);
+	if (!client->GetUserName().empty() && client->getState() == AUTHENTICATED) {
+		registerClient(client, fd);
 	}
 }
 
 void Server::set_username(std::string& username, int fd)
 {
-	Client *client = GetClient(fd);
+	Client *client = getClientOrReturn(fd);
 	if (!client)
 		return;
 
@@ -483,11 +476,24 @@ void Server::set_username(std::string& username, int fd)
 	// client->SetRealname(realname); // Assuming a SetRealname method exists or add it
 	logMsg("Client FD: {%i} username set to: {%s}", fd, newUsername.c_str());
 
-	if (!client->GetNickName().empty() && client->getState() == AUTHENTICATED) { // Use new state
-		client->setState(REGISTERED); // Set state to REGISTERED
-		_sendResponse(RPL_WELCOME(client->GetNickName(), client->GetUserName()), fd);
-		_sendResponse(RPL_YOURHOST(client->GetNickName()), fd);
-		_sendResponse(RPL_CREATED(client->GetNickName()), fd);
-		_sendResponse(RPL_MYINFO(client->GetNickName()), fd);
+	if (!client->GetNickName().empty() && client->getState() == AUTHENTICATED) {
+		registerClient(client, fd);
 	}
+}
+
+void Server::registerClient(Client *client, int fd) {
+	client->setState(REGISTERED);
+	_sendResponse(RPL_WELCOME(client->GetNickName(), client->GetUserName()), fd);
+	_sendResponse(RPL_YOURHOST(client->GetNickName()), fd);
+	_sendResponse(RPL_CREATED(client->GetNickName()), fd);
+	_sendResponse(RPL_MYINFO(client->GetNickName()), fd);
+}
+
+Client* Server::getClientOrReturn(int fd) {
+    Client *client = GetClient(fd);
+    if (!client) {
+        logMsg("Client was not found for fd: {%i}", fd);
+        return NULL;
+    }
+    return client;
 }

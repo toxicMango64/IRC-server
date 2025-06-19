@@ -118,6 +118,8 @@ public:
 	bool nickNameInUse( std::string& nickname );
 	// bool is_validNickname( std::string& nickname );
 	void client_authen( int fd, std::string pass );
+	void registerClient(Client *client, int fd);
+	Client* getClientOrReturn(int fd);
 
 	void	JOIN(const std::string& cmd, int fd);
 	int		SplitJoin(std::vector<std::pair<std::string, std::string> > &token, const std::string& cmd, int fd);

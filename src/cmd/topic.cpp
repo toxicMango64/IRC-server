@@ -50,7 +50,7 @@ static std::string tTopic()
 static int getpos(std::string &cmd)
 {
 	for (int i = 0; i < (int)cmd.size(); i++) {
-		if (cmd[i] == ':' && (cmd[i - 1] == 32)) {
+		if (cmd[i] == ':' && (cmd[i - 1] == ' ')) {
 			return i;
 		}
 	}
@@ -84,8 +84,8 @@ void Server::Topic(std::string &cmd, int &fd)
 		}
 		const size_t pos = GetChannel(nmch)->GetTopicName().find(':');
 		if (GetChannel(nmch)->GetTopicName() != "" && pos == std::string::npos) {
-			_sendResponse(": 332 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n", fd);
-			_sendResponse(": 333 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " " + GetClient(fd)->GetNickName() + " " + GetChannel(nmch)->GetTime() + "\r\n", fd);
+			_sendResponse(RPL_TOPICIS(GetClient(fd)->GetNickName(), nmch, GetChannel(nmch)->GetTopicName()), fd);
+			_sendResponse(RPL_TOPICIS(GetClient(fd)->GetNickName(), nmch, GetClient(fd)->GetNickName() + " " + GetChannel(nmch)->GetTime()), fd);
 			return ;
 		}
 		else {
@@ -93,8 +93,8 @@ void Server::Topic(std::string &cmd, int &fd)
 			if (pos == 0) {
 				GetChannel(nmch)->GetTopicName().erase(0, 1);
 			}
-			_sendResponse(": 332 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n", fd);
-			_sendResponse(": 333 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " " + GetClient(fd)->GetNickName() + " " + GetChannel(nmch)->GetTime() + "\r\n", fd);
+			_sendResponse(RPL_TOPICIS(GetClient(fd)->GetNickName(), nmch, GetChannel(nmch)->GetTopicName()), fd);
+			_sendResponse(RPL_TOPICIS(GetClient(fd)->GetNickName(), nmch, GetClient(fd)->GetNickName() + " " + GetChannel(nmch)->GetTime()), fd);
 			return ;
 		}
 	}

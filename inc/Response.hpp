@@ -19,12 +19,16 @@ inline std::string RPL_UMODEIS(const std::string& hostname, const std::string& c
            std::string(mode) + " " + std::string(user) + CRLF;
 }
 
+inline std::string RPL_CHANNELMODE_GENERIC(const std::string& nickname, const std::string& channelname, const std::string& param, const std::string& rpl_code) {
+    return ":" + rpl_code + " " + std::string(nickname) + " #" + std::string(channelname) + " " + std::string(param) + CRLF;
+}
+
 inline std::string RPL_CREATIONTIME(const std::string& nickname, const std::string& channelname, const std::string& creationtime) {
-    return ": 329 " + std::string(nickname) + " #" + std::string(channelname) + " " + std::string(creationtime) + CRLF;
+    return RPL_CHANNELMODE_GENERIC(nickname, channelname, creationtime, "329");
 }
 
 inline std::string RPL_CHANNELMODES(const std::string& nickname, const std::string& channelname, const std::string& modes) {
-    return ": 324 " + std::string(nickname) + " #" + std::string(channelname) + " " + std::string(modes) + CRLF;
+    return RPL_CHANNELMODE_GENERIC(nickname, channelname, modes, "324");
 }
 
 inline std::string RPL_CHANGEMODE(const std::string& hostname, const std::string& channelname,

@@ -168,10 +168,9 @@ bool validPassword(const std::string& password)
 
 std::string Server::password_mode(const std::vector<std::string>& tokens, Channel* channel, size_t& pos, char opera, int fd, const std::string& chain, std::string& arguments) {
     std::string param, pass;
-    if (tokens.size() > pos)
+    if (tokens.size() > pos) {
         pass = tokens[pos++];
-    else
-    {
+    } else {
         _sendResponse(ERR_NEEDMODEPARM(channel->GetName(), "(k)"), fd);
         return param;
     }
@@ -209,10 +208,9 @@ std::string Server::password_mode(const std::vector<std::string>& tokens, Channe
 
 std::string Server::operator_privilege(const std::vector<std::string>& tokens, Channel* channel, size_t& pos, int fd, char opera, const std::string& chain, std::string& arguments) {
     std::string param, user;
-    if (tokens.size() > pos)
+    if (tokens.size() > pos) {
         user = tokens[pos++];
-    else
-    {
+    } else {
         _sendResponse(ERR_NEEDMODEPARM(channel->GetName(), "(o)"), fd);
         return param;
     }

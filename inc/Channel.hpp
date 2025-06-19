@@ -71,6 +71,9 @@ public:
 	Client *get_client( int fd );
 	Client *get_admin( int fd );
 	Client *GetClientInChannel( std::string name );
+	Client* findClientInList(const std::string& name, std::vector<Client>& clientList);
+	bool moveClientBetweenLists(std::string& nick, std::vector<Client>& sourceList, std::vector<Client>& destList);
+	void sendToAllExcept(int excludeFd, const std::string& message);
 	/** Methods */
 	void add_client( Client newClient );
 	void add_admin( Client newClient );

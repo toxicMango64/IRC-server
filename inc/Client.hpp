@@ -35,6 +35,7 @@ class Client {
 		std::string		getIpAdd();
 		std::string		getBuffer();
 		std::string		getHostname();
+		const std::set<std::string>& GetJoinedChannels() const;
 		
 		/** setters */
 		void	SetFd(int fd);
