@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include "Client.hpp"
 
 static const int MAX_CLIENT_LIMIT = 5;
@@ -22,9 +23,9 @@ private:
 	std::string	password;
 	std::string	created_at;
 	std::string	topic_name;
-	std::vector<Client>	clients;
-	std::vector<Client>	admins;
-	std::vector<std::pair<char, bool> >	modes;
+	std::map<int, Client> clients;
+	std::map<int, Client> admins;
+	std::vector<std::pair<char, bool> > modes;
 
 public:
 	// Constructor to initialize members
@@ -57,49 +58,28 @@ public:
 	int GetTopic(  );
 	int GetKey(  );
 	int GetLimit(  );
-	int GetClientsNumber(  );
-	bool Gettopic_restriction( ) const;
-	bool getModeAtindex( size_t index );
-	bool clientInChannel( std::string &nick );
-	std::string GetTopicName(  );
-	std::string GetPassword(  );
-	std::string GetName(  );
-	std::string GetTime(  );
-	std::string get_creationtime(  );
-	std::string getModes(  );
-	std::string clientChannel_list(  );
-	Client *get_client( int fd );
-	Client *get_admin( int fd );
-	Client *GetClientInChannel( std::string name );
+	int GetClientsNumber();
+	bool clientInChannel(std::string &nick);
+	Client *get_client(int fd);
+	Client *get_admin(int fd);
+	Client *GetClientInChannel(std::string name);
+	std::string GetTopicName();
+	std::string GetPassword();
+	std::string GetName();
+	std::string GetTime();
+	std::string get_creationtime();
+	std::string getModes();
+	bool getModeAtindex(size_t index) const;
+	bool Gettopic_restriction() const;
 	/** Methods */
-	void add_client( Client newClient );
-	void add_admin( Client newClient );
-	void remove_client( int fd );
-	void remove_admin( int fd );
-	bool change_clientToAdmin( std::string& nick );
-	bool change_adminToClient( std::string& nick );
-	/** SendToAll */
+	void add_client(Client newClient);
+	void add_admin(Client newClient);
+	void remove_client(int fd);
+	void remove_admin(int fd);
+	bool change_clientToAdmin(std::string& nick);
+	bool change_adminToClient(std::string& nick);
+	std::string clientChannel_list(  );
 	void sendTo_all( std::string rpl1 );
 	void sendTo_all( std::string rpl1, int fd );
 
 };
-
-// struct ChannelMode {
-//     bool        inviteOnly = false;
-//     bool        topicRestricted = false;
-//     bool        keyEnabled = false;
-//     std::string key;
-//     bool        clientLimitEnabled = false;
-//     int         clientLimit = 0;
-// };
-
-// class Channel {
-//     public:
-//         std::string     name;
-//         std::set<int>   members;
-//         std::set<int>   operators;
-//         ChannelMode     mode;
-//         std::string     topic;
-
-//         Channel(  const std::string& name, int creatorFd  );
-// };

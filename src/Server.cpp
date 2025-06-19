@@ -15,8 +15,8 @@ Server &Server::operator=( Server const &src ) {
 		this->_port = src._port;
 		this->sfds = src.sfds;
 		this->_password = src._password;
-		this->clients = src.clients;
-		this->channels = src.channels;
+		this->_clients = src._clients;
+        this->channels = src.channels;
 		this->fds = src.fds;
 	}
 	return (*this);
@@ -57,11 +57,12 @@ void Server::closeFds() {
     struct linger linger_opt = { .l_onoff = 1, .l_linger = 0 }; // Hard close
 
     // Close clients
-    for (size_t i = 0; i < clients.size(); i++) {
-        setsockopt(clients[i].GetFd(), SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
-        close(clients[i].GetFd());
-        std::cout << "Client <" << clients[i].GetFd() << "> Disconnected \n";
+    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+        setsockopt(it->second.GetFd(), SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
+        close(it->second.GetFd());
+        std::cout << "Client <" << it->second.GetFd() << "> Disconnected \n";
     }
+    _clients.clear();
 
     // Close server socket
     if (sfds != -1) {
@@ -130,7 +131,7 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
 	fds.push_back(clientPoll);
 
 	try {
-		connectedClients.insert(std::make_pair(clientFd, Client(clientFd)));
+		_clients.insert(std::make_pair(clientFd, Client(clientFd)));
         AddClient(Client(clientFd));
 	} catch (const std::exception& e) {
 		throw std::runtime_error("Failed to store new client: " + std::string(e.what()));
@@ -158,7 +159,7 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 		}
 		close(clientFd);
 		fds.erase(fds.begin() + clientIndex);
-		connectedClients.erase(clientFd);
+		_clients.erase(clientFd);
 	} else {
 		// Handle the received message here
 		logMsg("Received from client fd: {%i} : {%s}", clientFd, buffer);
@@ -228,17 +229,16 @@ void Server::run(int sFd) {
 int Server::GetPort(){return this->_port;}
 int Server::GetFd(){return this->sfds;}
 Client *Server::GetClient(int fd){
-	for (size_t i = 0; i < this->clients.size(); i++){
-		if (this->clients[i].GetFd() == fd)
-			return &this->clients[i];
-	}
+	std::map<int, Client>::iterator it = _clients.find(fd);
+	if (it != _clients.end())
+		return &(it->second);
 	return NULL;
 }
 
 Client *Server::GetClientNick(std::string nickname){
-	for (size_t i = 0; i < this->clients.size(); i++){
-		if (this->clients[i].GetNickName() == nickname)
-			return &this->clients[i];
+	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+		if (it->second.GetNickName() == nickname)
+			return &(it->second);
 	}
 	return NULL;
 }
@@ -259,15 +259,14 @@ void Server::SetPassword( const std::string password ) { this->_password = passw
 
 std::string Server::GetPassword(  ) { return this->_password; }
 
-void Server::AddClient( Client newClient ) { this->clients.push_back( newClient); }
+void Server::AddClient( Client newClient ) {
+	_clients.insert(std::make_pair(newClient.GetFd(), newClient));
+}
 void Server::AddChannel( Channel newChannel ) { this->channels.push_back( newChannel); }
 void Server::AddFds( pollfd newFd ) { this->fds.push_back(newFd); }
 
 void Server::RemoveClient(int fd){
-	for (size_t i = 0; i < this->clients.size(); i++){
-		if (this->clients[i].GetFd() == fd)
-			{this->clients.erase(this->clients.begin() + i); return;}
-	}
+	_clients.erase(fd);
 }
 void Server::RemoveChannel(std::string name){
 	for (size_t i = 0; i < this->channels.size(); i++){
@@ -345,8 +344,10 @@ void Server::getCmd(std::string& cmd, int fd)
 	if (command == "PING")
 		_sendResponse("PONG\r\n", fd);
     else if (command == "CAP"){
-        // std::cout << "Capability negotiation in progress" << std::endl;
-        _sendResponse("CAP * LS :\r\n", fd);
+        if (tokens[1] == "LS") 
+            _sendResponse("CAP * LS :\r\n", fd);
+        else if (tokens[1] == "REQ")
+            _sendResponse("CAP * ACK :\r\b", fd);
     }
 	else if (command == "PASS")
 		client_authen(fd, cmd);
@@ -356,6 +357,8 @@ void Server::getCmd(std::string& cmd, int fd)
 		set_username(cmd, fd);
 	else if (command == "QUIT")
 		QUIT(cmd, fd);
+    else if (command == "WHOIS")
+        return ;
 	else if (GetClient(fd)->getRegistered()) {
 		if (command == "KICK")
 			KICK(cmd, fd);

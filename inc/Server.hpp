@@ -50,8 +50,7 @@ private:
 	static bool _signalRecvd;
 
 	int							sfds;
-	std::map<int, Client>		connectedClients;
-	std::vector<Client>			clients;
+	std::map<int, Client>		_clients;
 	std::vector<Channel>		channels;
 	std::vector<struct pollfd>	fds;
 	struct sockaddr_in			add;

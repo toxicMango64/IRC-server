@@ -173,9 +173,9 @@ bool isValidNickname(const std::string& nickname) {
 }
 
 bool Server::nickNameInUse(std::string& nickname) {
-	for (size_t i = 0; i < this->clients.size(); i++)
+	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (this->clients[i].GetNickName() == nickname)
+		if (it->second.GetNickName() == nickname)
 			return true;
 	}
 	return false;
