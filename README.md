@@ -119,6 +119,8 @@ d
 ```
 (using `Ctrl+D` to simulate broken-up message delivery).
 
+---
+
 ## Useful Links
 
 - [Beej's Guide to Network Programming (Simple Stream Server)](https://beej.us/guide/bgnet/html/split/client-server-background.html#a-simple-stream-server)
@@ -131,3 +133,4 @@ d
 - [Irssi GitHub Repository](https://github.com/irssi/irssi)
 
 
+check the user name it should not have characyer ,   the printed messages, joining chaneel with a key check, join zero should remove the client from all channels, if we did TOPIC #channelname: it should show the message without a topic, which docs did we follow, who will be the operator if the first one left, for the key it should be cannot join +K, check if there is a key after the channel it should apply it as key not just after changing the key to new one, number provided with the error messages, KICK multiple users from one channel
