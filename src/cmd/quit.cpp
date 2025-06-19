@@ -73,7 +73,7 @@ void Server::QUIT(const std::string& cmd, int fd) {
 				continue ;
 			}
 			else {
-				const std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + reason + "\r\n";
+				const std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server QUIT " + reason + "\r\n";
 				channels[i].sendTo_all(rpl);
 			}
 		}
@@ -84,7 +84,7 @@ void Server::QUIT(const std::string& cmd, int fd) {
 				continue ;
 			}
 			else {
-				const std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT " + reason + "\r\n";
+				const std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server QUIT " + reason + "\r\n";
 				channels[i].sendTo_all(rpl);
 			}
 		}

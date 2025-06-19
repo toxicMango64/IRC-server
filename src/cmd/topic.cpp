@@ -1,33 +1,5 @@
 #include "../../inc/Server.hpp"
 
-// static std::string Server::tTopic()
-// {
-// 	const std::time_t current = std::time(NULL);
-// 	std::stringstream res;
-
-// 	res << current;
-// 	return res.str();
-// }
-// static std::string Server::gettopic(std::string &input)
-// {
-// 	const size_t pos = input.find(':');
-// 	if (pos == std::string::npos)
-// 	{
-// 		return "";
-// 	}
-// 	return input.substr(pos);
-// }
-
-// static int Server::getpos(std::string &cmd)
-// {
-// 	for (int i = 0; i < (int)cmd.size(); i++) {
-// 		if (cmd[i] == ':' && (cmd[i - 1] == 32)) {
-// 			return i;
-// 		}
-// 	}
-// 	return -1;
-// }
-
 static std::string tTopic()
 {
 	const std::time_t current = std::time(NULL);
@@ -36,16 +8,6 @@ static std::string tTopic()
 	res << current;
 	return res.str();
 }
-
-// static std::string gettopic(std::string &input)
-// {
-// 	const size_t pos = input.find(':');
-// 	if (pos == std::string::npos)
-// 	{
-// 		return "";
-// 	}
-// 	return input.substr(pos);
-// }
 
 static int getpos(std::string &cmd)
 {
@@ -128,10 +90,10 @@ void Server::Topic(std::string &cmd, int &fd)
 			std::string rpl;
 			const size_t pos = tmp[2].find(':');
 			if (pos == std::string::npos) {
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@server TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
             }
 			else {
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@server TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
             }
 			GetChannel(nmch)->sendTo_all(rpl);
 		}
@@ -141,7 +103,7 @@ void Server::Topic(std::string &cmd, int &fd)
 			if (pos == std::string::npos) {
 				GetChannel(nmch)->SetTime(tTopic());
 				GetChannel(nmch)->SetTopicName(tmp[2]);
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@server TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
 			}
 			else {
 				const size_t poss = tmp[2].find(' ');
@@ -151,7 +113,7 @@ void Server::Topic(std::string &cmd, int &fd)
 				}
 				GetChannel(nmch)->SetTopicName(tmp[2]);
 				GetChannel(nmch)->SetTime(tTopic());
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@localhost TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@server TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
 			}
 			GetChannel(nmch)->sendTo_all(rpl);
 		}

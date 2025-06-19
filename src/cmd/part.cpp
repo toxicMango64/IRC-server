@@ -108,7 +108,7 @@ void Server::PART(const std::string& cmd, int fd) {
                     continue ;
                 }
                 std::stringstream ss;
-                ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " PART #" << tmp[i];
+                ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "server" << " PART #" << tmp[i];
                 if (!reason.empty()) {
                     ss << " :" << reason << "\r\n";
                 } else {

@@ -110,7 +110,7 @@ void Server::KICK(const std::string &cmd, int fd) {
                 if (targetClient != NULL) {
                     std::stringstream ss;
                     ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName()
-                       << "@" << "localhost"
+                       << "@server"
                        << " KICK #" << tmp[i] << " " << user;
                     if (!reason.empty()) {
                         ss << " :" << reason << "\r\n";
