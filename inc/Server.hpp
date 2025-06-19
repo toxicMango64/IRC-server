@@ -115,7 +115,7 @@ public:
 	std::vector<std::string>	splitCmd( std::string &str );
 
 	bool nickNameInUse( std::string& nickname );
-	// bool is_validNickname( std::string& nickname );
+	// bool isValidNickname( std::string& nickname );
 	void client_authen( int fd, std::string pass );
 
 	void	JOIN(const std::string& cmd, int fd);
