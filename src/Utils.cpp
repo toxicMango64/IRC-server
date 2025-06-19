@@ -1,9 +1,5 @@
 #include "../inc/Server.hpp"
 
-/**
- * @brief Trims trailing/leading whitespace
- * @param inputString 
- */
 void trimWhitespace(std::string& inputString) {
 	const size_t lastNonWhitespace = inputString.find_last_not_of(" \t\n\r");
 	if (lastNonWhitespace != std::string::npos) {
@@ -20,11 +16,6 @@ void trimWhitespace(std::string& inputString) {
 	}
 }
 
-/**
- * @brief 
- * @param portString 
- * @return 
- */
 bool validatePortString(const std::string& portString) {
 	if (portString.empty() || (portString.size() > 1 && portString[0] == '0')) {
 		std::cerr << "Invalid port format\n";
@@ -42,29 +33,32 @@ int64_t stringToLong(const std::string& inputString) {
 	return (result);
 }
 
-bool validatePort(const std::string& portString, int& portNumber) {
-	std::string processedPortString = portString;
-	trimWhitespace(processedPortString);
-
-	if (!validatePortString(processedPortString)) { return (false); };
-
-	try {
-		const int64_t portValue = stringToLong(processedPortString);
-		if (portValue < MIN_PORT || portValue > MAX_PORT) {
-			std::cerr << "Port out of range ("
-					<< MIN_PORT << "-" << MAX_PORT << ")\n";
-			return (false);
-		}
-		portNumber = static_cast<int>(portValue);
-		return (true);
-	}
-	catch (const std::invalid_argument&) {
-		std::cerr << "Invalid port number\n";
-	}
-	catch (const std::out_of_range&) {
-		std::cerr << "Port value too large\n";
-	}
-	return (false);
+bool validatePort(const std::string& portStr, int& result) {
+    if (portStr.empty()) {
+        std::cerr << "Error: Port cannot be empty.\n";
+        return false;
+    }
+    if (portStr.length() > 5) { // Max port is 65535, 5 digits
+        std::cerr << "Error: Port number too long.\n";
+        return false;
+    }
+    for (size_t i = 0; i < portStr.length(); ++i) {
+        if (!std::isdigit(portStr[i])) {
+            std::cerr << "Error: Port must be a number.\n";
+            return false;
+        }
+    }
+    std::stringstream ss(portStr);
+    ss >> result;
+    if (ss.fail() || !ss.eof()) {
+        std::cerr << "Error: Invalid port number format.\n";
+        return false;
+    }
+    if (result <= 1024 || result > 65535) { // Common range for non-privileged ports
+        std::cerr << "Error: Port must be between Common range for non-privileged ports (1025 - 65535).\n";
+        return false;
+    }
+    return true;
 }
 
 bool validatePassword(const std::string& password) {
