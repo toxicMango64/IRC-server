@@ -56,6 +56,7 @@ bool validatePassword( const std::string& password );
 #endif
 
 COLD_FN inline void logMsg(const char* format, ...) {
+(void)format;
 #if DEBUG_MODE
 
 	if (!format) return;
