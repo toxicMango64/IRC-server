@@ -16,12 +16,6 @@ enum Commands {
     INVALID,
 };
 
-void    handlePass();
-void    handleNick();
-void    handleUser();
-void    handleJoin();
-void    handlePart();
-
 class Client;
 
 std::vector<std::string> splitReceivedBuffer(const std::string& str);
