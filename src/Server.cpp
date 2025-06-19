@@ -7,22 +7,29 @@
 #include "Response.hpp"
 #include "Server.hpp"
 
-Server::Server(const int port, const std::string& password) 
-	: _port(port), _password(password)
-{
-	// struct sigaction act;
-	// act.sa_handler = Server::signalHandler;
-	// sigemptyset(&act.sa_mask);
-	// act.sa_flags = 0;
+Server::Server() { }
+Server::~Server( ) { }
+Server::Server( Server const &src ) { *this = src; }
+Server &Server::operator=( Server const &src ) {
+	if (this != &src) {
+		this->_port = src._port;
+		this->sfds = src.sfds;
+		this->_password = src._password;
+		this->clients = src.clients;
+		this->channels = src.channels;
+		this->fds = src.fds;
+	}
+	return (*this);
+}
 
-	// if (sigaction(SIGINT, &act, NULL) == -1) {
-	// 	std::cerr << "Error setting SIGINT handler: " << std::strerror(errno) << std::endl;
-	// 	throw (std::runtime_error("Error setting SIGINT handler"));
-	// }
-	// if (sigaction(SIGQUIT, &act, NULL) == -1) {
-	// 	std::cerr << "Error setting SIGQUIT handler: " << std::strerror(errno) << std::endl;
-	// 	throw (std::runtime_error("Error setting SIGQUIT handler"));
-	// }
+Server::Server(const int port, const std::string& password) 
+	: _port(port), _password(password) {
+	int sFd = createSocket();
+
+	setNonBlocking(sFd);
+	bindSocket(sFd);
+	startListening(sFd);
+	run(sFd);
 }
 
 bool Server::_signalRecvd = false;
@@ -46,7 +53,6 @@ bool Server::isValid() const {
 	return (_port >= MIN_PORT && _port <= MAX_PORT) && !_password.empty();
 }
 
-
 void Server::closeFds() {
     struct linger linger_opt = { .l_onoff = 1, .l_linger = 0 }; // Hard close
 
@@ -56,14 +62,13 @@ void Server::closeFds() {
         close(clients[i].GetFd());
         std::cout << "Client <" << clients[i].GetFd() << "> Disconnected \n";
     }
-    
+
     // Close server socket
     if (sfds != -1) {
-        close(sfds);
         std::cout << "Server <" << sfds << "> Disconnected \n";
+		close(sfds);
     }
 }
-
 
 // wrapper funciton for socket
 int Server::createSocket() {
@@ -71,6 +76,7 @@ int Server::createSocket() {
 	if (sFd == -1) {
 		throw (std::runtime_error("Failed to create socket: "));
 	}
+	SetFd(sFd);
 	return sFd;
 }
 
@@ -131,14 +137,7 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
 	}
 
 	logMsg("New client connected, FD: {%i}", clientFd);
-	
-	const std::string welcome = ":ircserv 001 client :Welcome to ft_irc\r\n";
-	ssize_t bytesSent = send(clientFd, welcome.c_str(), welcome.length(), 0);
-	if (bytesSent == -1) {
-		throw std::runtime_error("Failed to send welcome message to client");
-	}
-	
-	logMsg("Welcome message sent to client FD: {%i}", clientFd);
+
 }
 
 void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
@@ -200,7 +199,7 @@ void Server::run(int sFd) {
 	signal(SIGPIPE, SIG_IGN); // or MSG_NOSIGNAL flag in send() to ignore SIGPIPE on linux systems
 
 	logMsg("Server started on port: {%i}", _port);
-	
+
 	while (Server::_signalRecvd == false) {
 
 		int pollRet = poll(fds.data(), fds.size(), -1);
@@ -223,22 +222,6 @@ void Server::run(int sFd) {
 		}
 	}
     closeFds();
-    std::cout << "Closing file descriptors" << std::endl;
-}
-
-Server::Server( ) { this->sfds = -1; }
-Server::~Server( ) { }
-Server::Server( Server const &src ) { *this = src; }
-Server &Server::operator=( Server const &src ) {
-	if (this != &src) {
-		this->_port = src._port;
-		this->sfds = src.sfds;
-		this->_password = src._password;
-		this->clients = src.clients;
-		this->channels = src.channels;
-		this->fds = src.fds;
-	}
-	return (*this);
 }
 
 /** getters */
@@ -309,7 +292,7 @@ void	Server::RmChannels(int fd){
 		if (channels[i].GetClientsNumber() == 0)
 			{channels.erase(channels.begin() + i); i--; continue;}
 		if (flag){
-			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT Quit\r\n";
+			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server QUIT Quit\r\n";
 			channels[i].sendTo_all(rpl);
 		}
 	}
@@ -318,7 +301,7 @@ void	Server::RmChannels(int fd){
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << msg;
+	ss << ":server " << code << " " << clientname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild \n";
@@ -327,12 +310,13 @@ void Server::senderror(int code, std::string clientname, int fd, std::string msg
 void Server::senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << " " << channelname << msg;
+	ss << ":server " << code << " " << clientname << " " << channelname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild \n";
 }
 
+// add carnage returns and new line in the end manually
 void Server::_sendResponse(std::string response, int fd)
 {
 	if(send(fd, response.c_str(), response.size(), 0) == -1)
@@ -354,45 +338,44 @@ void Server::getCmd(std::string& cmd, int fd)
 	}
 
 	std::string command = tokens[0];
-	for (size_t i = 0; i < command.length(); ++i) {
-		command[i] = static_cast<char>(std::tolower(command[i]));
-	}
+	// for (size_t i = 0; i < command.length(); ++i) {
+	// 	command[i] = static_cast<char>(std::tolower(command[i]));
+	// }
 
-	if (command == "bong")
-		return ;
-    else if (command == "cap"){
-        std::cout << "Capability negotiation in progress" << std::endl;
-        _sendResponse("CAP * LS :", fd);
+	if (command == "PING")
+		_sendResponse("PONG\r\n", fd);
+    else if (command == "CAP"){
+        // std::cout << "Capability negotiation in progress" << std::endl;
+        _sendResponse("CAP * LS :\r\n", fd);
     }
-	else if (command == "pass")
+	else if (command == "PASS")
 		client_authen(fd, cmd);
-	else if (command == "nick")
+	else if (command == "NICK")
 		set_nickname(cmd, fd);
-	else if (command == "user")
+	else if (command == "USER")
 		set_username(cmd, fd);
-	else if (command == "quit")
+	else if (command == "QUIT")
 		QUIT(cmd, fd);
-	else if (GetClient(fd)->getRegistered())
-	{
-		if (command == "kick")
+	else if (GetClient(fd)->getRegistered()) {
+		if (command == "KICK")
 			KICK(cmd, fd);
-		else if (command == "join")
+		else if (command == "JOIN") {
+			logMsg("the thing that happened cmd: {%s} fd: {%i}", cmd.c_str(), fd);
 			JOIN(cmd, fd);
-		else if (command == "topic")
+		}
+		else if (command == "TOPIC")
 			Topic(cmd, fd);
-		else if (command == "mode")
+		else if (command == "MODE")
 			mode_command(cmd, fd);
-		else if (command == "part")
+		else if (command == "PART")
 			PART(cmd, fd);
-		else if (command == "privmsg")
+		else if (command == "PRIVMSG")
 			PRIVMSG(cmd, fd);
-		else if (command == "invite")
+		else if (command == "INVITE")
 			Invite(cmd, fd);
 		else
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(), tokens[0]), fd);
-	}
-	else
-	{
+	} else {
 		_sendResponse(ERR_NOTREGISTERED("*"), fd);
 	}
 }

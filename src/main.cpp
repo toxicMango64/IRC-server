@@ -28,16 +28,17 @@ int main(const int ac, const char *const *av) {
 		return (1);
 	}
 
-	Server server(port, av[2]);
 	
-	try {
-		// Add server signal handling here (already integrated above)
-		int sFd = server.createSocket();
+	Server server;
 
-		server.setNonBlocking(sFd);
-		server.bindSocket(sFd);
-		server.startListening(sFd);
-		server.run(sFd);
+	try {
+		server = Server(port, av[2]);
+		// int sFd = server.createSocket();
+
+		// server.setNonBlocking(sFd);
+		// server.bindSocket(sFd);
+		// server.startListening(sFd);
+		// server.run(sFd);
 
 	} catch (const std::exception& e) {
 		logMsg("Exception caught: %s", e.what());
