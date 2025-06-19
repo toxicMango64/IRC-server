@@ -15,9 +15,12 @@
 #include <cstring>
 #include <iomanip>
 #include <ctime>
+#include <vector>
 
 bool validatePort( const std::string& portStr, int& result );
 bool validatePassword( const std::string& password );
+bool isValidNickname(const std::string& nickname); // Declaring isValidNickname
+std::vector<std::string> splitReceivedBuffer(const std::string& str);
 
 // // Compiler-specific macros for optimizations
 // #if defined(_MSC_VER)

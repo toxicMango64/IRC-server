@@ -53,6 +53,24 @@ inline std::string RPL_TOPICIS(const std::string& nickname, const std::string& c
     return ": 332 " + std::string(nickname) + " #" + std::string(channelname) + " :" + std::string(topic) + CRLF;
 }
 
+// New RPL messages for registration
+inline std::string RPL_WELCOME(const std::string& nickname, const std::string& username) {
+    return ":localhost 001 " + nickname + " :Welcome to the ft_irc Network, " + nickname + "!" + username + "@localhost" + CRLF;
+}
+
+inline std::string RPL_YOURHOST(const std::string& nickname) {
+    return ":localhost 002 " + nickname + " :Your host is localhost, running version 1.0" + CRLF;
+}
+
+inline std::string RPL_CREATED(const std::string& nickname) {
+    return ":localhost 003 " + nickname + " :This server was created " + __DATE__ + " at " + __TIME__ + CRLF;
+}
+
+inline std::string RPL_MYINFO(const std::string& nickname) {
+    return ":localhost 004 " + nickname + " localhost 1.0 aoOirw" + CRLF;
+}
+
+
 // Error messages
 
 inline std::string ERR_NEEDMODEPARM(const std::string& channelname, const std::string& mode) {
@@ -71,8 +89,9 @@ inline std::string ERR_UNKNOWNMODE(const std::string& nickname, const std::strin
     return ": 472 " + std::string(nickname) + " #" + std::string(channelname) + " " + std::string(mode) + " :is not a recognised channel mode" + CRLF;
 }
 
-inline std::string ERR_NOTENOUGHPARAM(const std::string& nickname) {
-    return ": 461 " + std::string(nickname) + " :Not enough parameters." + CRLF;
+// Corrected error messages
+inline std::string ERR_NEEDMOREPARAMS(const std::string& nickname, const std::string& command) {
+    return ":localhost 461 " + nickname + " " + command + " :Not enough parameters" + CRLF;
 }
 
 inline std::string ERR_CHANNELNOTFOUND(const std::string& nickname, const std::string& channelname) {
@@ -87,30 +106,30 @@ inline std::string ERR_NOSUCHNICK(const std::string& channelname, const std::str
     return ": 401 #" + std::string(channelname) + " " + std::string(name) + " :No such nick/channel" + CRLF;
 }
 
-inline std::string ERR_INCORPASS(const std::string& nickname) {
-    return ": 464 " + std::string(nickname) + " :Password incorrect!" + CRLF;
+inline std::string ERR_PASSWDMISMATCH(const std::string& nickname) {
+    return ":localhost 464 " + nickname + " :Password incorrect" + CRLF;
 }
 
 inline std::string ERR_ALREADYREGISTERED(const std::string& nickname) {
-    return ": 462 " + std::string(nickname) + " :You may not reregister!" + CRLF;
+    return ":localhost 462 " + nickname + " :You may not reregister" + CRLF;
 }
 
-inline std::string ERR_NONICKNAME(const std::string& nickname) {
-    return ": 431 " + std::string(nickname) + " :No nickname given" + CRLF;
+inline std::string ERR_NONICKNAMEGIVEN(const std::string& nickname) {
+    return ":localhost 431 " + nickname + " :No nickname given" + CRLF;
 }
 
-inline std::string ERR_NICKINUSE(const std::string& nickname) {
-    return ": 433 " + std::string(nickname) + " :Nickname is already in use" + CRLF;
+inline std::string ERR_NICKNAMEINUSE(const std::string& nickname, const std::string& newnickname) {
+    return ":localhost 433 " + nickname + " " + newnickname + " :Nickname is already in use" + CRLF;
 }
 
-inline std::string ERR_ERRONEUSNICK(const std::string& nickname) {
-    return ": 432 " + std::string(nickname) + " :Erroneous nickname" + CRLF;
+inline std::string ERR_ERRONEUSNICKNAME(const std::string& nickname, const std::string& newnickname) {
+    return ":localhost 432 " + nickname + " " + newnickname + " :Erroneous nickname" + CRLF;
 }
 
 inline std::string ERR_NOTREGISTERED(const std::string& nickname) {
-    return ": 451 " + std::string(nickname) + " :You have not registered!" + CRLF;
+    return ":localhost 451 " + nickname + " :You have not registered" + CRLF;
 }
 
 inline std::string ERR_CMDNOTFOUND(const std::string& nickname, const std::string& command) {
-    return ": 421 " + std::string(nickname) + " " + std::string(command) + " :Unknown command" + CRLF;
+    return ":localhost 421 " + nickname + " " + command + " :Unknown command" + CRLF;
 }

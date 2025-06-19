@@ -71,16 +71,6 @@ int Server::SplitJoin(std::vector<std::pair<std::string, std::string> > &token, 
     return 1;
 }
 
-int Server::SearchForClients(const std::string& nickname)
-{
-    int count = 0;
-    for (size_t i = 0; i < this->channels.size(); i++) {
-        if (this->channels[i].GetClientInChannel(nickname) != NULL) {
-            count++;
-        }
-    }
-    return count;
-}
 
 bool IsInvited(Client* cli, std::string ChName, int flag)
 {

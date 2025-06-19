@@ -12,14 +12,37 @@ bool Server::isValid() const {
 }
 
 void	Server::closeFds(){
-	for(size_t i = 0; i < clients.size(); i++){
-		std::cout << "Client <" << clients[i].GetFd() << "> Disconnected \n";
-		close(clients[i].GetFd());
+	for (std::map<int, Client>::iterator it = connectedClients.begin(); it != connectedClients.end(); ++it) {
+		std::cout << "Client <" << it->first << "> Disconnected \n";
+		close(it->first);
 	}
+	connectedClients.clear(); // Clear the map
 	if (sfds != -1){	
 		std::cout << "Server <" << sfds << "> Disconnected \n";
 		close(sfds);
 	}
+}
+
+std::vector<std::string> Server::splitCmd(std::string& cmd)
+{
+	std::vector<std::string> vec;
+	std::istringstream stm(cmd);
+	std::string token;
+	while(stm >> token)
+	{
+		vec.push_back(token);
+		token.clear();
+	}
+	return vec;
+}
+
+bool Server::nickNameInUse(std::string& nickname) {
+	for (std::map<int, Client>::iterator it = connectedClients.begin(); it != connectedClients.end(); ++it)
+	{
+		if (it->second.GetNickName() == nickname)
+			return true;
+	}
+	return false;
 }
 
 // wrapper funciton for socket
@@ -91,7 +114,6 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
 
 	try {
 		connectedClients.insert(std::make_pair(clientFd, Client(clientFd)));
-        AddClient(Client(clientFd));
 	} catch (const std::exception& e) {
 		throw std::runtime_error("Failed to store new client: " + std::string(e.what()));
 	}
@@ -203,9 +225,9 @@ Server &Server::operator=( Server const &src ) {
 		this->_port = src._port;
 		this->sfds = src.sfds;
 		this->_password = src._password;
-		this->clients = src.clients;
 		this->channels = src.channels;
 		this->fds = src.fds;
+		this->connectedClients = src.connectedClients; // Copy the map
 	}
 	return (*this);
 }
@@ -214,17 +236,17 @@ Server &Server::operator=( Server const &src ) {
 int Server::GetPort(){return this->_port;}
 int Server::GetFd(){return this->sfds;}
 Client *Server::GetClient(int fd){
-	for (size_t i = 0; i < this->clients.size(); i++){
-		if (this->clients[i].GetFd() == fd)
-			return &this->clients[i];
+	std::map<int, Client>::iterator it = connectedClients.find(fd);
+	if (it != connectedClients.end()) {
+		return &(it->second);
 	}
 	return NULL;
 }
 
 Client *Server::GetClientNick(std::string nickname){
-	for (size_t i = 0; i < this->clients.size(); i++){
-		if (this->clients[i].GetNickName() == nickname)
-			return &this->clients[i];
+	for (std::map<int, Client>::iterator it = connectedClients.begin(); it != connectedClients.end(); ++it) {
+		if (it->second.GetNickName() == nickname)
+			return &(it->second);
 	}
 	return NULL;
 }
@@ -245,15 +267,12 @@ void Server::SetPassword( const std::string password ) { this->_password = passw
 
 std::string Server::GetPassword(  ) { return this->_password; }
 
-void Server::AddClient( Client newClient ) { this->clients.push_back( newClient); }
+// void Server::AddClient( Client newClient ) { /* No longer needed, clients added directly to map */ (void)newClient; } // Removed
 void Server::AddChannel( Channel newChannel ) { this->channels.push_back( newChannel); }
 void Server::AddFds( pollfd newFd ) { this->fds.push_back(newFd); }
 
 void Server::RemoveClient(int fd){
-	for (size_t i = 0; i < this->clients.size(); i++){
-		if (this->clients[i].GetFd() == fd)
-			{this->clients.erase(this->clients.begin() + i); return;}
-	}
+	connectedClients.erase(fd);
 }
 void Server::RemoveChannel(std::string name){
 	for (size_t i = 0; i < this->channels.size(); i++){
@@ -341,7 +360,7 @@ void Server::getCmd(std::string& cmd, int fd)
 		set_username(cmd, fd);
 	else if (command == "quit")
 		QUIT(cmd, fd);
-	else if (GetClient(fd)->getRegistered())
+	else if (GetClient(fd)->getState() == REGISTERED) // Use new state
 	{
 		if (command == "kick")
 			KICK(cmd, fd);
@@ -363,5 +382,112 @@ void Server::getCmd(std::string& cmd, int fd)
 	else
 	{
 		_sendResponse(ERR_NOTREGISTERED("*"), fd);
+	}
+}
+
+int Server::SearchForClients(const std::string& nickname){
+	for (std::map<int, Client>::iterator it = connectedClients.begin(); it != connectedClients.end(); ++it) {
+		if (it->second.GetNickName() == nickname)
+			return it->first;
+	}
+	return -1;
+}
+
+void Server::client_authen(int fd, std::string pass)
+{
+	Client *client = GetClient(fd);
+	if (!client)
+		return;
+	
+	std::vector<std::string> tokens = splitCmd(pass);
+	if (tokens.size() < 2) {
+		_sendResponse(ERR_NEEDMOREPARAMS(client->GetNickName(), "PASS"), fd);
+		return;
+	}
+
+	if (client->getState() != UNAUTHENTICATED) { // Check if already authenticated or registered
+		_sendResponse(ERR_ALREADYREGISTERED(client->GetNickName()), fd);
+		return;
+	}
+
+	if (tokens[1] == _password) {
+		client->setState(AUTHENTICATED); // Set state to AUTHENTICATED
+		logMsg("Client FD: {%i} authenticated successfully.", fd);
+	} else {
+		_sendResponse(ERR_PASSWDMISMATCH(client->GetNickName()), fd);
+		logMsg("Client FD: {%i} authentication failed.", fd);
+	}
+}
+
+void Server::set_nickname(std::string cmd, int fd)
+{
+	Client *client = GetClient(fd);
+	if (!client)
+		return;
+
+	std::vector<std::string> tokens = splitCmd(cmd);
+	if (tokens.size() < 2) {
+		_sendResponse(ERR_NONICKNAMEGIVEN(client->GetNickName()), fd);
+		return;
+	}
+
+	std::string newNickname = tokens[1];
+	if (newNickname.empty() || newNickname.length() > 9 || !isValidNickname(newNickname)) {
+		_sendResponse(ERR_ERRONEUSNICKNAME(client->GetNickName(), newNickname), fd);
+		return;
+	}
+
+	if (nickNameInUse(newNickname)) {
+		_sendResponse(ERR_NICKNAMEINUSE(client->GetNickName(), newNickname), fd);
+		return;
+	}
+
+	client->SetNickname(newNickname);
+	logMsg("Client FD: {%i} nickname set to: {%s}", fd, newNickname.c_str());
+
+	if (!client->GetUserName().empty() && client->getState() == AUTHENTICATED) { // Use new state
+		client->setState(REGISTERED); // Set state to REGISTERED
+		_sendResponse(RPL_WELCOME(client->GetNickName(), client->GetUserName()), fd);
+		_sendResponse(RPL_YOURHOST(client->GetNickName()), fd);
+		_sendResponse(RPL_CREATED(client->GetNickName()), fd);
+		_sendResponse(RPL_MYINFO(client->GetNickName()), fd);
+	}
+}
+
+void Server::set_username(std::string& username, int fd)
+{
+	Client *client = GetClient(fd);
+	if (!client)
+		return;
+
+	std::vector<std::string> tokens = splitCmd(username);
+	if (tokens.size() < 5) {
+		_sendResponse(ERR_NEEDMOREPARAMS(client->GetNickName(), "USER"), fd);
+		return;
+	}
+
+	std::string newUsername = tokens[1];
+	std::string realname = tokens[4]; // Assuming realname is the 5th token
+
+	if (newUsername.empty()) {
+		_sendResponse(ERR_NEEDMOREPARAMS(client->GetNickName(), "USER"), fd);
+		return;
+	}
+
+	if (client->getState() != UNAUTHENTICATED) { // Check if already authenticated or registered
+		_sendResponse(ERR_ALREADYREGISTERED(client->GetNickName()), fd);
+		return;
+	}
+
+	client->SetUsername(newUsername);
+	// client->SetRealname(realname); // Assuming a SetRealname method exists or add it
+	logMsg("Client FD: {%i} username set to: {%s}", fd, newUsername.c_str());
+
+	if (!client->GetNickName().empty() && client->getState() == AUTHENTICATED) { // Use new state
+		client->setState(REGISTERED); // Set state to REGISTERED
+		_sendResponse(RPL_WELCOME(client->GetNickName(), client->GetUserName()), fd);
+		_sendResponse(RPL_YOURHOST(client->GetNickName()), fd);
+		_sendResponse(RPL_CREATED(client->GetNickName()), fd);
+		_sendResponse(RPL_MYINFO(client->GetNickName()), fd);
 	}
 }

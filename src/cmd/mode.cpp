@@ -55,7 +55,7 @@ void Server::mode_command(std::string& cmd, int fd)
     if (found != std::string::npos)
         cmd = cmd.substr(found);
     else {
-        _sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd);
+        _sendResponse(ERR_NEEDMOREPARAMS(cli->GetNickName(), "MODE"), fd);
         return;
     }
 

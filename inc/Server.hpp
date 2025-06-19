@@ -52,7 +52,6 @@ private:
 
 	int							sfds;
 	std::map<int, Client>		connectedClients;
-	std::vector<Client>			clients;
 	std::vector<Channel>		channels;
 	std::vector<struct pollfd>	fds;
 	struct sockaddr_in			add;
@@ -61,10 +60,9 @@ private:
 
 public:
 	static const int	MAX_BUF = 512;
-	static const char	buffer[MAX_BUF] __attribute__((aligned(16)));
 
 	bool				isValid( void ) const;
-	static void			signalHandler(int signum) __attribute__ ((__noreturn__));
+	// static void			signalHandler(int signum) __attribute__ ((__noreturn__)); // Removed duplicate/unused declaration
 
 	Server();
 	~Server();
@@ -73,8 +71,8 @@ public:
 	Server( int port, const std::string& password );
 
 	void	run( int sFd );
-	void	closeFds( void ); /** implement the fucntion */
-	static void SignalHandler( int signum );
+	void	closeFds( void );
+	static void SignalHandler( int signum ); // This is the active signal handler
 	int		createSocket( void );
 	void	bindSocket( int sFd );
 	int		setNonBlocking( int fd );
@@ -93,7 +91,7 @@ public:
 	void	SetFd( int sfds );
 	void	SetPort( int port );
 	void	SetPassword( std::string password );
-	void	AddClient( Client newClient );
+	// void	AddClient( Client newClient ); // Removed, clients added directly to map
 	void	AddChannel( Channel newChannel );
 	void	AddFds( pollfd newFd );
 	void	set_username( std::string& username, int fd );

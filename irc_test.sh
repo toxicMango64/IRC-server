@@ -1,8 +1,8 @@
 #!/bin/bash
 
-HOST=localhost
-PORT="$1"
-PASS="$2"
+HOST="$1"
+PORT="$2"
+PASS="$3"
 DELAY=1  # Delay between commands (seconds)
 TIMEOUT=5 # Timeout for each nc session in seconds
 

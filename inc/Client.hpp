@@ -25,14 +25,12 @@ class Client {
 		void	clearBuffer();
 		void	AddChannelInvite(std::string &chname);
 		void	RmChannelInvite(std::string &chname);
-		void	handleBuffer(Client& client, const char buf[512], const std::string& password, std::string& output);
 
 		/** getters */
 		int				GetFd();
-		bool			getRegistered();
+		ClientState		getState() const; // New getter for ClientState
 		bool			GetInviteChannel(std::string &ChName);
 		std::string		GetNickName();
-		bool			GetLogedIn();
 		std::string		GetUserName();
 		std::string		getIpAdd();
 		std::string		getBuffer();
@@ -41,10 +39,9 @@ class Client {
 		/** setters */
 		void	SetFd(int fd);
 		void	SetNickname(std::string& nickName);
-		void	setLogedin(bool value);
 		void	SetUsername(std::string& username);
 		void	setBuffer(std::string recived);
-		void	setRegistered(bool value);
+		void	setState(ClientState newState); // New setter for ClientState
 		void	setIpAdd(std::string ipadd);
 
 
@@ -56,10 +53,8 @@ class Client {
 		ClientState             state;
 		std::set<std::string>   channels;
 		bool                    isOperator;
-		bool 					registered;
 		std::string				buffer;
 		std::string				ipadd;
-		bool					logedin;
 		
 		std::vector<std::string>	ChannelsInvite;
 
