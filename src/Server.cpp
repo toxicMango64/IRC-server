@@ -68,9 +68,9 @@ void Server::closeFds() {
 
     connectedClients.clear();
 
-    if (sfds != -1) {
-        std::cout << "Server <" << sfds << "> Disconnected \n";
-        close(sfds);
+    if (this->sfds != -1) {
+        std::cout << "Server <" << this->sfds << "> Disconnected \n";
+        close(this->sfds);
     }
 }
 
@@ -342,25 +342,38 @@ void Server::getCmd(std::string& cmd, int fd)
 	}
 
 	std::string command = tokens[0];
-	// for (size_t i = 0; i < command.length(); ++i) {
-	// 	command[i] = static_cast<char>(std::tolower(command[i]));
-	// }
-	
-	// PONG // does nothing
-	// PING
-	// :calcium.libera.chat 461 nick PING :Not enough parameters
-	// PING libera.chat
-	// :calcium.libera.chat PONG calcium.libera.chat :libera.chat
-	// :<server-name> PONG <server-name> :<argument>
-	if (command == "PING") {
-	// 	if (NOTHER)
-	// 	std::string pong =  ":server PONG" + ;
-	// 	ss << ":server " << code << " " << clientname << " " << channelname << msg;
-		_sendResponse("PONG\r\n", fd);
 
-	}
+	// // PONG // does nothing
+	// // PING
+	// // :calcium.libera.chat 461 nick PING :Not enough parameters
+	// // PING libera.chat
+	// // :calcium.libera.chat PONG calcium.libera.chat :libera.chat
+	// // :<server-name> PONG <server-name> :<argument>
+	// if (command == "PING") {
+	// // 	if (NOTHER)
+	// // 	std::string pong =  ":server PONG" + ;
+	// // 	ss << ":server " << code << " " << clientname << " " << channelname << msg;
+	// 	_sendResponse("PONG\r\n", fd);
+
+	// }
+
+	if (command == "PING") {
+		std::vector<std::string> parts = splitCmd(cmd); // splitCmd should split by space
+		Client* cli = GetClient(fd);
+	
+		if (parts.size() < 2) {
+			// Missing argument → send error 461
+			std::string nick = cli ? cli->GetNickName() : "*";
+			_sendResponse(ERR_NOTENOUGHPARAM(nick), fd); // or manually: ":server 461 nick PING :Not enough parameters\r\n"
+		} else {
+			// Valid PING with argument
+			std::string arg = parts[1];
+			if (arg[0] == ':') arg = arg.substr(1); // remove leading ':' if present
+			std::string response = ":" + this->servername + " PONG " + this->servername + " :" + arg + "\r\n";
+			_sendResponse(response, fd);
+		}
+	}	
     else if (command == "CAP"){
-        // std::cout << "Capability negotiation in progress" << std::endl;
         _sendResponse("CAP * LS :\r\n", fd);
     }
 	else if (command == "PASS")
@@ -374,9 +387,8 @@ void Server::getCmd(std::string& cmd, int fd)
 	else if (GetClient(fd)->getRegistered() && (!GetClient(fd)->GetNickName().empty() && !GetClient(fd)->GetUserName().empty())) {
 		if (command == "KICK")
 			KICK(cmd, fd);
-		else if (command == "JOIN") {
+		else if (command == "JOIN")
 			JOIN(cmd, tokens, fd);
-		}
 		else if (command == "TOPIC")
 			Topic(cmd, fd);
 		else if (command == "MODE")

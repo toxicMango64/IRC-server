@@ -57,6 +57,7 @@ private:
 	struct sockaddr_in			add;
 	struct sockaddr_in			cliaddr;
 	struct pollfd				new_cli;
+	std::string 				serverName = "irc.dal.chawal";
 
 public:
 	static const int	MAX_BUF = 512;
