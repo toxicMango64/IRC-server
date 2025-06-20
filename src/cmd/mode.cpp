@@ -41,8 +41,9 @@ std::vector<std::string> Server::splitParams(std::string params)
     return tokens;
 }
 
-void Server::mode_command(std::string& cmd, int fd)
+void Server::mode_command(std::string& cmd, const std::vector<std::string> &tokens, int fd)
 {
+    (void) cmd;
     std::string channelName, params, modeset;
     std::stringstream mode_chain;
     std::string arguments;
@@ -51,16 +52,21 @@ void Server::mode_command(std::string& cmd, int fd)
 
     Client* cli = GetClient(fd);
 
-    size_t found = cmd.find_first_not_of("MODEmode \t\v");
-    if (found != std::string::npos)
-        cmd = cmd.substr(found);
-    else {
+    if (tokens.size() < 3) {
         _sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd);
         return;
+    } else {
+        if ((tokens[2] == "k" || tokens[2] == "+k") && tokens.size() < 4) {
+            _sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd);
+            return;
+        }
+        channelName = tokens[1];
+        modeset = tokens[2];
+        params = tokens[3];
     }
 
-    getCmdArgs(cmd, channelName, modeset, params);
-    std::vector<std::string> tokens = splitParams(params);
+    // getCmdArgs(cmd, channelName, modeset, params);
+    // std::vector<std::string> tokens = splitParams(params);
 
     if (channelName.empty() || channelName[0] != '#' || !(channel = GetChannel(channelName.substr(1)))) {
         _sendResponse(ERR_CHANNELNOTFOUND(cli->GetUserName(), channelName), fd);
@@ -92,6 +98,10 @@ void Server::mode_command(std::string& cmd, int fd)
     for (size_t i = 0; i < modeset.length(); ++i)
     {
         char mode_char = modeset[i];
+        if (i == 0) {
+            if (mode_char != '+' && mode_char != '-')
+                opera = '+';
+        }
         if (mode_char == '+' || mode_char == '-')
         {
             opera = mode_char;
@@ -114,6 +124,7 @@ void Server::mode_command(std::string& cmd, int fd)
     }
 
     std::string chain = mode_chain.str();
+    std::cerr << chain << std::endl;
     if (!chain.empty())
     {
         channel->sendToAll(RPL_CHANGEMODE(cli->getHostname(), channel->GetName(), chain, arguments));
@@ -168,8 +179,9 @@ bool validPassword(const std::string& password)
 
 std::string Server::password_mode(const std::vector<std::string>& tokens, Channel* channel, size_t& pos, char opera, int fd, const std::string& chain, std::string& arguments) {
     std::string param, pass;
-    if (tokens.size() > pos)
-        pass = tokens[pos++];
+    if (tokens.size() > pos) {
+        pass = tokens[3];
+    }
     else
     {
         _sendResponse(ERR_NEEDMODEPARM(channel->GetName(), "(k)"), fd);
@@ -186,6 +198,7 @@ std::string Server::password_mode(const std::vector<std::string>& tokens, Channe
     {
         channel->setModeAtindex(2, true);
         channel->SetPassword(pass);
+        std::cerr << "Password has been set to " << pass << std::endl;
         if (!arguments.empty())
             arguments += " ";
         arguments += pass;

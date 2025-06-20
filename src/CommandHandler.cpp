@@ -251,7 +251,6 @@ void	Server::set_username(std::string& cmd, int fd)
 
 	Client *cli = GetClient(fd); 
 	if((cli && splited_cmd.size() < 5)) {
-		std::cerr << "something happened" << std::endl;
 		_sendResponse(ERR_NOTENOUGHPARAM(cli->GetNickName()), fd);
 		return;
 	}

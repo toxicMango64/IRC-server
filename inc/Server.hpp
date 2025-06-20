@@ -135,7 +135,7 @@ public:
 
 	void	QUIT(const std::string& cmd, int fd);
 
-	void 		mode_command( std::string& cmd, int fd );
+	void 		mode_command( std::string& cmd, const std::vector<std::string> &tokens, int fd );
 	std::string invite_only(Channel* channel, char opera, const std::string& chain);
 	// std::string topicRestricted( Channel *channel ,char opera, std::string chain );
 	std::string topic_restriction(Channel* channel, char opera, const std::string& chain);

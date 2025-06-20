@@ -359,8 +359,7 @@ void Server::getCmd(std::string& cmd, int fd)
 		_sendResponse("PONG\r\n", fd);
 
 	}
-    else if (command == "CAP"){
-        // std::cout << "Capability negotiation in progress" << std::endl;
+    else if (command == "CAP") {
         _sendResponse("CAP * LS :\r\n", fd);
     }
 	else if (command == "PASS")
@@ -375,13 +374,12 @@ void Server::getCmd(std::string& cmd, int fd)
 		if (command == "KICK")
 			KICK(cmd, fd);
 		else if (command == "JOIN") {
-			logMsg("the thing that happened cmd: {%s} fd: {%i}", cmd.c_str(), fd);
 			JOIN(cmd, fd);
 		}
 		else if (command == "TOPIC")
 			Topic(cmd, fd);
 		else if (command == "MODE")
-			mode_command(cmd, fd);
+			mode_command(cmd, tokens, fd);
 		else if (command == "PART")
 			PART(cmd, fd);
 		else if (command == "PRIVMSG")
