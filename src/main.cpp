@@ -28,17 +28,10 @@ int main(const int ac, const char *const *av) {
 		return (1);
 	}
 
-	
 	Server server;
 
 	try {
 		server = Server(port, av[2]);
-		// int sFd = server.createSocket();
-
-		// server.setNonBlocking(sFd);
-		// server.bindSocket(sFd);
-		// server.startListening(sFd);
-		// server.run(sFd);
 
 	} catch (const std::exception& e) {
 		logMsg("Exception caught: %s", e.what());
