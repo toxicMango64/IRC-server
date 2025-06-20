@@ -344,6 +344,8 @@ void Server::getCmd(std::string& cmd, int fd)
 	if (command == "PING")
 		_sendResponse("PONG\r\n", fd);
     else if (command == "CAP"){
+        if (tokens.size() == 1)
+            return ;
         if (tokens[1] == "LS") 
             _sendResponse("CAP * LS :\r\n", fd);
         else if (tokens[1] == "REQ")
