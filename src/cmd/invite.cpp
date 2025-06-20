@@ -7,7 +7,7 @@ void Server::Invite( std::string &cmd, int &fd )
         senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");
         return;
     }
-    std::string channelname = scmd[2].substr(1);
+    std::string channelname = scmd[2];
 
     if(scmd[2][0] != '#' || GetChannel(channelname) == NULL) {
         senderror(403, channelname, fd, " :No such channel\r\n");
@@ -36,7 +36,7 @@ void Server::Invite( std::string &cmd, int &fd )
     }
 
     if (GetChannel(channelname)->GetLimit() != 0 && GetChannel(channelname)->GetClientsNumber() >= GetChannel(channelname)->GetLimit()) {
-        senderror(473, GetChannel(channelname)->get_client(fd)->GetNickName(), channelname, fd, " :Cannot invit to channel (+i)\r\n");
+        senderror(473, GetChannel(channelname)->get_client(fd)->GetNickName(), channelname, fd, " :Cannot invite to channel (+i)\r\n");
         return;
     }
 
