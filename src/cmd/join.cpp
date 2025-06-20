@@ -137,7 +137,7 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >& token, s
                       RPL_ENDOFNAMES(GetClient(fd)->GetNickName(), channels[j].GetName()), fd);
     }
 
-    channels[j].sendTo_all(RPL_JOINMSG(GetClient(fd)->getHostname(), GetClient(fd)->getIpAdd(), token[i].first), fd);
+    channels[j].sendToAllExcept(RPL_JOINMSG(GetClient(fd)->getHostname(), GetClient(fd)->getIpAdd(), token[i].first), fd);
 }
 
 void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, int fd)
