@@ -158,7 +158,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >& token
                   RPL_ENDOFNAMES(GetClient(fd)->GetNickName(), newChannel.GetName()), fd);
 }
 
-void Server::JOIN(const std::string& cmd, int fd)
+void Server::JOIN(const std::string& cmd, std::vector<std::string> tokens, int fd)
 {
     std::vector<std::pair<std::string, std::string > > token;
 
@@ -167,6 +167,37 @@ void Server::JOIN(const std::string& cmd, int fd)
         return;
     }
 
+    if (tokens.size() == 2 && tokens[1] == "0") {
+        Client* client = GetClient(fd);
+        if (!client) return;
+    
+        // Remove user from all channels
+        for (size_t j = 0; j < this->channels.size(); /* no increment here */) {
+            Channel& channel = channels[j];
+            if (channel.get_client(fd) != NULL || channel.get_admin(fd) != NULL) {
+                // Send PART message to all users in the channel
+                std::stringstream ss;
+                ss << ":" << client->GetNickName() << "!~" << client->GetUserName()
+                   << "@server PART #" << channel.GetName() << "\r\n";
+                channel.sendToAll(ss.str());
+    
+                // Remove user from admin/client lists
+                if (channel.get_admin(fd) != NULL)
+                    channel.remove_admin(fd);
+                else
+                    channel.remove_client(fd);
+    
+                // If channel is now empty, erase it
+                if (channel.GetClientsNumber() == 0) {
+                    channels.erase(channels.begin() + j);
+                    continue ; // don't increment j, as vector has shifted
+                }
+            }
+            ++j;
+        }
+        return;
+    }
+    
     if (token.size() > 10) {
         senderror(407, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Too many channels\r\n");
         return;
