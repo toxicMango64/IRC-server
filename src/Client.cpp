@@ -1,4 +1,5 @@
 #include "../inc/Client.hpp"
+#include "../inc/Server.hpp"
 
 Client::Client(int fd): fd(fd) {
 	this->nickname = "";
@@ -62,7 +63,19 @@ void Client::SetFd( int fd ) { this->fd = fd; }
 void Client::SetNickname( std::string& nickName ) { this->nickname = nickName; }
 void Client::setLogedin(bool value){this->logedin = value; }
 void Client::SetUsername(std::string& username){this->username = username; }
-void Client::setBuffer(std::string recived){buffer += recived; }
+
+void Client::setBuffer(std::string recived) {
+    if (buffer.length() + recived.length() > Server::MAX_BUF * 4) { // Arbitrary limit, e.g., 4 times MAX_BUF
+        // Disconnect client or handle error, for now just clear buffer to prevent crash
+        buffer.clear();
+        std::cerr << "Client buffer overflow prevented. Disconnecting client (FD: " << fd << ").\n";
+        // In a real scenario, you would signal the server to disconnect this client.
+        // For now, just clearing the buffer to prevent a crash.
+        return ;
+    }
+    buffer += recived;
+}
+
 void Client::setRegistered(bool value){registered = value; }
 void Client::setIpAdd(std::string ipadd){this->ipadd = ipadd; }
 
