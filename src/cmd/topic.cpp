@@ -19,18 +19,22 @@ static int getpos(std::string &cmd)
 	return -1;
 }
 
-void Server::Topic(std::string &cmd, int &fd)
+void Server::TOPIC(std::string &cmd, const std::vector<std::string>& tokens, int &fd)
 {
 	if (cmd == "TOPIC :") {
 		senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");
 		return;
 	}
-	std::vector<std::string> scmd = splitCmd(cmd);
-	if (scmd.size() == 1) {
+	if (tokens.size() == 1) {
 		senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");
 		return ;
 	}
-	const std::string nmch = scmd[1].substr(1);
+    // Removes the # from the second parameter
+    if (tokens[1][0] != '#') {
+		senderror(403, "#" + tokens[1], fd, " :No such channel\r\n");
+        return ;
+    }
+	const std::string nmch = tokens[1].substr(1);
 	if (GetChannel(nmch) == NULL) {
 		senderror(403, "#" + nmch, fd, " :No such channel\r\n");
 		return;
@@ -39,7 +43,7 @@ void Server::Topic(std::string &cmd, int &fd)
 		senderror(442, "#" + nmch, fd, " :You're not on that channel\r\n");
 		return ;
 	}
-	if (scmd.size() == 2) {
+	if (tokens.size() == 2) {
 		if (GetChannel(nmch)->GetTopicName() == "") {
 			_sendResponse(": 331 " + GetClient(fd)->GetNickName() + " " + "#" + nmch + " :No topic is set\r\n", fd);
 			return ;
@@ -61,17 +65,17 @@ void Server::Topic(std::string &cmd, int &fd)
 		}
 	}
 
-	if (scmd.size() >= 3) {
+	if (tokens.size() >= 3) {
 		std::vector<std::string> tmp;
 		const int pos = getpos(cmd);
-		if (pos == -1 || scmd[2][0] != ':') {
-			tmp.push_back(scmd[0]);
-			tmp.push_back(scmd[1]);
-			tmp.push_back(scmd[2]);
+		if (pos == -1 || tokens[2][0] != ':') {
+			tmp.push_back(tokens[0]);
+			tmp.push_back(tokens[1]);
+			tmp.push_back(tokens[2]);
 		}
 		else {
-			tmp.push_back(scmd[0]);
-			tmp.push_back(scmd[1]);
+			tmp.push_back(tokens[0]);
+			tmp.push_back(tokens[1]);
 			tmp.push_back(cmd.substr(pos));
 		}
 
