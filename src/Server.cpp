@@ -365,11 +365,10 @@ void Server::getCmd(std::string& cmd, int fd)
 		if (command == "KICK")
 			KICK(cmd, fd);
 		else if (command == "JOIN") {
-			logMsg("the thing that happened cmd: {%s} fd: {%i}", cmd.c_str(), fd);
 			JOIN(cmd, fd);
 		}
 		else if (command == "TOPIC")
-			Topic(cmd, fd);
+			TOPIC(cmd, tokens, fd);
 		else if (command == "MODE")
 			mode_command(cmd, fd);
 		else if (command == "PART")
