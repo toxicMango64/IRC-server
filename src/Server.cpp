@@ -330,7 +330,7 @@ void Server::_sendResponse(std::string response, int fd)
 void Server::getCmd(std::string& cmd, int fd)
 {
 	if (cmd.empty())
-		return;
+		return ;
 
 	const size_t firstNonSpace = cmd.find_first_not_of(" \t\v");
 	if (firstNonSpace != std::string::npos)
@@ -371,12 +371,11 @@ void Server::getCmd(std::string& cmd, int fd)
 		set_username(cmd, fd);
 	else if (command == "QUIT")
 		QUIT(cmd, fd);
-	else if (GetClient(fd)->getRegistered()) {
+	else if (GetClient(fd)->getRegistered() && (!GetClient(fd)->GetNickName().empty() && !GetClient(fd)->GetUserName().empty())) {
 		if (command == "KICK")
 			KICK(cmd, fd);
 		else if (command == "JOIN") {
-			logMsg("the thing that happened cmd: {%s} fd: {%i}", cmd.c_str(), fd);
-			JOIN(cmd, fd);
+			JOIN(cmd, tokens, fd);
 		}
 		else if (command == "TOPIC")
 			Topic(cmd, fd);
