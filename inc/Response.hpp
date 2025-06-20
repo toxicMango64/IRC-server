@@ -10,7 +10,29 @@
 // extern const std::string CRLF = "\r\n";
 
 inline std::string RPL_CONNECTED(const std::string& nickname) {
-    return ": 001 " + std::string(nickname) + " :Welcome to the IRC server!" + CRLF;
+    return ": 001 " + std::string(nickname) + " :Welcome to the irc.dal.chwal!" + CRLF;
+}
+
+// 002 RPL_YOURHOST
+inline std::string RPL_YOURHOST(const std::string& nickname) {
+    return ":irc.dal.chwal 002 " + nickname + " :Your host is irc.dal.chwal, running version 1.0" + CRLF;
+}
+
+// 003 RPL_CREATED
+inline std::string RPL_CREATED(const std::string& nickname) {
+    return ":irc.dal.chwal 003 " + nickname + " :This server was created Fri Jun 20 2025 at 17:01:00 +04" + CRLF;
+}
+
+// 004 RPL_MYINFO
+inline std::string RPL_MYINFO(const std::string& nickname) {
+    // <servername> <version> <available user modes> <available channel modes>
+    return ":irc.dal.chwal 004 " + nickname + " irc.dal.chwal 1.0 o o o o" + CRLF;
+}
+
+// 005 RPL_ISUPPORT
+inline std::string RPL_ISUPPORT(const std::string& nickname) {
+    // Add actual ISUPPORT tokens as appropriate for your server
+    return ":irc.dal.chwal 005 " + nickname + " CHANTYPES=#& PREFIX=(ohv)@%+ :are supported by this server" + CRLF;
 }
 
 inline std::string RPL_UMODEIS(const std::string& hostname, const std::string& channelname,
