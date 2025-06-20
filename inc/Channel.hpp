@@ -79,27 +79,7 @@ public:
 	bool change_clientToAdmin( std::string& nick );
 	bool change_adminToClient( std::string& nick );
 	/** SendToAll */
-	void sendTo_all( std::string rpl1 );
-	void sendTo_all( std::string rpl1, int fd );
+	void sendToAll( std::string msg );
+	void sendToAllExcept(const std::string& message, int excludeFd);
 
 };
-
-// struct ChannelMode {
-//     bool        inviteOnly = false;
-//     bool        topicRestricted = false;
-//     bool        keyEnabled = false;
-//     std::string key;
-//     bool        clientLimitEnabled = false;
-//     int         clientLimit = 0;
-// };
-
-// class Channel {
-//     public:
-//         std::string     name;
-//         std::set<int>   members;
-//         std::set<int>   operators;
-//         ChannelMode     mode;
-//         std::string     topic;
-
-//         Channel(  const std::string& name, int creatorFd  );
-// };
