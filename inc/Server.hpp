@@ -118,7 +118,7 @@ public:
 	// bool isValidNickname( std::string& nickname );
 	void client_authen( int fd, std::string pass );
 
-	void	JOIN(const std::string& cmd, int fd);
+	void	JOIN(const std::string& cmd, std::vector<std::string> tokens, int fd);
 	int		SplitJoin(std::vector<std::pair<std::string, std::string> > &token, const std::string& cmd, int fd);
 	void	ExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, size_t j, int fd);
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, int fd);
