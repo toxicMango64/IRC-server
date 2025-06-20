@@ -184,31 +184,31 @@ bool Channel::change_adminToClient(std::string& nick){
 
 }
 
-void Channel::sendTo_all(std::string rpl1)
+void Channel::sendToAll(std::string msg)
 {
 	for (size_t i = 0; i < admins.size(); i++) {
-		if (send(admins[i].GetFd(), rpl1.c_str(), rpl1.size(),0) == -1) {
+		if (send(admins[i].GetFd(), msg.c_str(), msg.size(),0) == -1) {
 			std::cerr << "send() faild \n";
 		}
 	}
 	for (size_t i = 0; i < clients.size(); i++) {
-		if (send(clients[i].GetFd(), rpl1.c_str(), rpl1.size(),0) == -1) {
+		if (send(clients[i].GetFd(), msg.c_str(), msg.size(),0) == -1) {
 			std::cerr << "send() faild \n";
 		}
 	}
 }
-void Channel::sendTo_all(std::string rpl1, int fd)
-{
-	for (size_t i = 0; i < admins.size(); i++) {
-		if (admins[i].GetFd() != fd)
-			if (send(admins[i].GetFd(), rpl1.c_str(), rpl1.size(),0) == -1) {
-				std::cerr << "send() faild \n";
-			}
-	}
-	for (size_t i = 0; i < clients.size(); i++) {
-		if (clients[i].GetFd() != fd)
-			if (send(clients[i].GetFd(), rpl1.c_str(), rpl1.size(),0) == -1) {
-				std::cerr << "send() faild \n";
-			}
-	}
+
+void Channel::sendToAllExcept(const std::string& msg, int excludeFd) {
+    for (size_t i = 0; i < admins.size(); i++) {
+        if (admins[i].GetFd() != excludeFd)
+            if (send(admins[i].GetFd(), msg.c_str(), msg.size(), 0) == -1) {
+                std::cerr << "send() failed \n";
+            }
+    }
+    for (size_t i = 0; i < clients.size(); i++) {
+        if (clients[i].GetFd() != excludeFd)
+            if (send(clients[i].GetFd(), msg.c_str(), msg.size(), 0) == -1) {
+                std::cerr << "send() failed \n";
+            }
+    }
 }
