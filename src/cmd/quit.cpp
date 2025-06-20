@@ -74,7 +74,7 @@ void Server::QUIT(const std::string& cmd, int fd) {
 			}
 			else {
 				const std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server QUIT " + reason + "\r\n";
-				channels[i].sendTo_all(rpl);
+				channels[i].sendToAll(rpl);
 			}
 		}
 		else if (channels[i].get_admin(fd) != NULL) {
@@ -85,7 +85,7 @@ void Server::QUIT(const std::string& cmd, int fd) {
 			}
 			else {
 				const std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server QUIT " + reason + "\r\n";
-				channels[i].sendTo_all(rpl);
+				channels[i].sendToAll(rpl);
 			}
 		}
 		++i;

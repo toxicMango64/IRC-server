@@ -133,7 +133,7 @@ void Server::PRIVMSG(const std::string& cmd, int fd)
         if (!tmp[i].empty() && tmp[i][0] == '#') {
             tmp[i].erase(tmp[i].begin());
             const std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server PRIVMSG #" + tmp[i] + " :" + message + "\r\n";
-            GetChannel(tmp[i])->sendTo_all(resp, fd);
+            GetChannel(tmp[i])->sendToAllExcept(resp, fd);
         }
         else {
             const std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server PRIVMSG " + tmp[i] + " :" + message + "\r\n";

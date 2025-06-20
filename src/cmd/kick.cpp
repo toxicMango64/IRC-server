@@ -117,7 +117,7 @@ void Server::KICK(const std::string &cmd, int fd) {
                     } else {
                         ss << "\r\n";
                     }
-                    ch->sendTo_all(ss.str());
+                    ch->sendToAll(ss.str());
                     if (ch->get_admin(targetClient->GetFd()) != NULL) {
                         ch->remove_admin(targetClient->GetFd());
                     } else {

@@ -116,7 +116,7 @@ void Server::mode_command(std::string& cmd, int fd)
     std::string chain = mode_chain.str();
     if (!chain.empty())
     {
-        channel->sendTo_all(RPL_CHANGEMODE(cli->getHostname(), channel->GetName(), chain, arguments));
+        channel->sendToAll(RPL_CHANGEMODE(cli->getHostname(), channel->GetName(), chain, arguments));
     }
 }
 

@@ -114,7 +114,7 @@ void Server::PART(const std::string& cmd, int fd) {
                 } else {
                     ss << "\r\n";
                 }
-                channels[j].sendTo_all(ss.str());
+                channels[j].sendToAll(ss.str());
                 Client* clientPtr = channels[j].GetClientInChannel(GetClient(fd)->GetNickName());
                 if (clientPtr != NULL && channels[j].get_admin(clientPtr->GetFd()) != NULL) {
                     channels[j].remove_admin(clientPtr->GetFd());

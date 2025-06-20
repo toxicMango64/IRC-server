@@ -95,7 +95,7 @@ void Server::Topic(std::string &cmd, int &fd)
 			else {
 				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@server TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
             }
-			GetChannel(nmch)->sendTo_all(rpl);
+			GetChannel(nmch)->sendToAll(rpl);
 		}
 		else {
 			std::string rpl;
@@ -115,7 +115,7 @@ void Server::Topic(std::string &cmd, int &fd)
 				GetChannel(nmch)->SetTime(tTopic());
 				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@server TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
 			}
-			GetChannel(nmch)->sendTo_all(rpl);
+			GetChannel(nmch)->sendToAll(rpl);
 		}
 	}
 }
