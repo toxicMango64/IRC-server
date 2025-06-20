@@ -1,9 +1,8 @@
 #include <csignal>
-#include <netinet/tcp.h> // For SO_LINGER
+#include <netinet/tcp.h>
 #include <stdexcept>
 #include <stdlib.h>
 #include <sys/socket.h>
-
 #include "Response.hpp"
 #include "Server.hpp"
 
@@ -56,17 +55,22 @@ bool Server::isValid() const {
 void Server::closeFds() {
     struct linger linger_opt = { .l_onoff = 1, .l_linger = 0 }; // Hard close
 
-    // Close clients
-    for (size_t i = 0; i < clients.size(); i++) {
-        setsockopt(clients[i].GetFd(), SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
-        close(clients[i].GetFd());
-        std::cout << "Client <" << clients[i].GetFd() << "> Disconnected \n";
+    for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        setsockopt(it->GetFd(), SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
+        std::cout << "Client <" << it->GetFd() << "> Disconnected \n";
+        close(it->GetFd());
     }
 
-    // Close server socket
+    for (std::map<int, Client>::iterator it = connectedClients.begin(); it != connectedClients.end(); ++it) {
+        std::cout << "Client <" << it->first << "> Disconnected \n";
+        close(it->first);
+    }
+
+    connectedClients.clear();
+
     if (sfds != -1) {
         std::cout << "Server <" << sfds << "> Disconnected \n";
-		close(sfds);
+        close(sfds);
     }
 }
 
@@ -293,7 +297,7 @@ void	Server::RmChannels(int fd){
 			{channels.erase(channels.begin() + i); i--; continue;}
 		if (flag){
 			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server QUIT Quit\r\n";
-			channels[i].sendTo_all(rpl);
+			channels[i].sendToAll(rpl);
 		}
 	}
 }
@@ -341,9 +345,20 @@ void Server::getCmd(std::string& cmd, int fd)
 	// for (size_t i = 0; i < command.length(); ++i) {
 	// 	command[i] = static_cast<char>(std::tolower(command[i]));
 	// }
-
-	if (command == "PING")
+	
+	// PONG // does nothing
+	// PING
+	// :calcium.libera.chat 461 nick PING :Not enough parameters
+	// PING libera.chat
+	// :calcium.libera.chat PONG calcium.libera.chat :libera.chat
+	// :<server-name> PONG <server-name> :<argument>
+	if (command == "PING") {
+	// 	if (NOTHER)
+	// 	std::string pong =  ":server PONG" + ;
+	// 	ss << ":server " << code << " " << clientname << " " << channelname << msg;
 		_sendResponse("PONG\r\n", fd);
+
+	}
     else if (command == "CAP"){
         // std::cout << "Capability negotiation in progress" << std::endl;
         _sendResponse("CAP * LS :\r\n", fd);
