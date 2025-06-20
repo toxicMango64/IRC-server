@@ -1,6 +1,18 @@
 #include "../../inc/Server.hpp"
 #include "../../inc/Response.hpp"
 
+bool isValidChannelName(const std::string& name) {
+    if (name.size() < 2) return false; // must be at least 2 characters
+    if (name[0] != '#' && name[0] != '&') return false;
+    for (size_t i = 0; i < name.size(); ++i) {
+        if (name[i] == ' ' || name[i] == ',' || name[i] == 7)
+            return false;
+    }
+    if (name.size() > 200) return false;
+    return true;
+}
+
+
 int Server::SplitJoin(std::vector<std::pair<std::string, std::string> > &token, const std::string& cmd, int fd)
 {
     std::vector<std::string> tmp;
@@ -59,12 +71,12 @@ int Server::SplitJoin(std::vector<std::pair<std::string, std::string> > &token, 
     }
 
     for (size_t i = 0; i < token.size(); i++) {
-        if (*(token[i].first.begin()) != '#') {
-            senderror(403, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :No such channel\r\n");
+        if (!isValidChannelName(token[i].first)) {
+            senderror(476, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :Invalid channel name\r\n");
             token.erase(token.begin() + i);
             --i;
         } else {
-            token[i].first.erase(token[i].first.begin());
+            // token[i].first.erase(token[i].first.begin());
         }
     }
 
@@ -106,20 +118,20 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >& token, s
 
     if (!this->channels[j].GetPassword().empty() && this->channels[j].GetPassword() != token[i].second) {
         if (!IsInvited(GetClient(fd), token[i].first, 0)) {
-            senderror(475, GetClient(fd)->GetNickName(), "#" + token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+k) - bad key\r\n");
+            senderror(475, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+k) - bad key\r\n");
             return;
         }
     }
 
     if (this->channels[j].GetInvitOnly()) {
         if (!IsInvited(GetClient(fd), token[i].first, 1)) {
-            senderror(473, GetClient(fd)->GetNickName(), "#" + token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+i)\r\n");
+            senderror(473, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+i)\r\n");
             return;
         }
     }
 
     if (this->channels[j].GetLimit() && this->channels[j].GetClientsNumber() >= this->channels[j].GetLimit()) {
-        senderror(471, GetClient(fd)->GetNickName(), "#" + token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+l)\r\n");
+        senderror(471, GetClient(fd)->GetNickName(), token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+l)\r\n");
         return;
     }
 

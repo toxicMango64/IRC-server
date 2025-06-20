@@ -80,8 +80,8 @@ int Server::SplitCmdPart(const std::string& cmd, std::vector<std::string> &tmp, 
     }
 
     for (size_t i = 0; i < tmp.size(); i++) {
-        if (!tmp[i].empty() && *(tmp[i].begin()) == '#') {
-            tmp[i].erase(tmp[i].begin());
+        if (!tmp[i].empty() && (*(tmp[i].begin()) == '#' || *(tmp[i].begin()) == '&')) {
+            // tmp[i].erase(tmp[i].begin());
         } else {
             senderror(403, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n");
             tmp.erase(tmp.begin() + static_cast<std::vector<std::string>::difference_type>(i));
@@ -104,11 +104,11 @@ void Server::PART(const std::string& cmd, int fd) {
             if (this->channels[j].GetName() == tmp[i]) {
                 flag = true;
                 if (channels[j].get_client(fd) == NULL && channels[j].get_admin(fd) == NULL) { // not on channel
-                    senderror(442, GetClient(fd)->GetNickName(), "#" + tmp[i], GetClient(fd)->GetFd(), " :You're not on that channel\r\n");
+                    senderror(442, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :You're not on that channel\r\n");
                     continue ;
                 }
                 std::stringstream ss;
-                ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "server" << " PART #" << tmp[i];
+                ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "server" << " PART " << tmp[i];
                 if (!reason.empty()) {
                     ss << " :" << reason << "\r\n";
                 } else {
@@ -127,7 +127,7 @@ void Server::PART(const std::string& cmd, int fd) {
             }
         }
         if (!flag) {
-            senderror(403, GetClient(fd)->GetNickName(), "#" + tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n");
+            senderror(403, GetClient(fd)->GetNickName(), tmp[i], GetClient(fd)->GetFd(), " :No such channel\r\n");
         }
     }
 }

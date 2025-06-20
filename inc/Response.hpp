@@ -20,11 +20,11 @@ inline std::string RPL_UMODEIS(const std::string& hostname, const std::string& c
 }
 
 inline std::string RPL_CREATIONTIME(const std::string& nickname, const std::string& channelname, const std::string& creationtime) {
-    return ": 329 " + std::string(nickname) + " #" + std::string(channelname) + " " + std::string(creationtime) + CRLF;
+    return ": 329 " + std::string(nickname) + " " + std::string(channelname) + " " + std::string(creationtime) + CRLF;
 }
 
 inline std::string RPL_CHANNELMODES(const std::string& nickname, const std::string& channelname, const std::string& modes) {
-    return ": 324 " + std::string(nickname) + " #" + std::string(channelname) + " " + std::string(modes) + CRLF;
+    return ": 324 " + std::string(nickname) + " " + std::string(channelname) + " " + std::string(modes) + CRLF;
 }
 
 inline std::string RPL_CHANGEMODE(const std::string& hostname, const std::string& channelname,
@@ -38,19 +38,19 @@ inline std::string RPL_NICKCHANGE(const std::string& oldnickname, const std::str
 }
 
 inline std::string RPL_JOINMSG(const std::string& hostname, const std::string& ipaddress, const std::string& channelname) {
-    return ":" + std::string(hostname) + "@" + std::string(ipaddress) + " JOIN #" + std::string(channelname) + CRLF;
+    return ":" + std::string(hostname) + "@" + std::string(ipaddress) + " JOIN " + std::string(channelname) + CRLF;
 }
 
 inline std::string RPL_NAMREPLY(const std::string& nickname, const std::string& channelname, const std::string& clientslist) {
-    return ": 353 " + std::string(nickname) + " @ #" + std::string(channelname) + " :" + std::string(clientslist) + CRLF;
+    return ": 353 " + std::string(nickname) + " @ " + std::string(channelname) + " :" + std::string(clientslist) + CRLF;
 }
 
 inline std::string RPL_ENDOFNAMES(const std::string& nickname, const std::string& channelname) {
-    return ": 366 " + std::string(nickname) + " #" + std::string(channelname) + " :End of /NAMES list" + CRLF;
+    return ": 366 " + std::string(nickname) + " " + std::string(channelname) + " :End of /NAMES list" + CRLF;
 }
 
 inline std::string RPL_TOPICIS(const std::string& nickname, const std::string& channelname, const std::string& topic) {
-    return ": 332 " + std::string(nickname) + " #" + std::string(channelname) + " :" + std::string(topic) + CRLF;
+    return ": 332 " + std::string(nickname) + " " + std::string(channelname) + " :" + std::string(topic) + CRLF;
 }
 
 // Error messages
@@ -68,7 +68,7 @@ inline std::string ERR_KEYSET(const std::string& channelname) {
 }
 
 inline std::string ERR_UNKNOWNMODE(const std::string& nickname, const std::string& channelname, const std::string& mode) {
-    return ": 472 " + std::string(nickname) + " #" + std::string(channelname) + " " + std::string(mode) + " :is not a recognised channel mode" + CRLF;
+    return ": 472 " + std::string(nickname) + " " + std::string(channelname) + " " + std::string(mode) + " :is not a recognised channel mode" + CRLF;
 }
 
 inline std::string ERR_NOTENOUGHPARAM(const std::string& nickname) {
