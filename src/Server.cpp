@@ -297,7 +297,7 @@ void	Server::RmChannels(int fd){
 		if (channels[i].GetClientsNumber() == 0)
 			{channels.erase(channels.begin() + i); i--; continue;}
 		if (flag){
-			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server QUIT Quit\r\n";
+			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@" + this->serverName + " QUIT Quit\r\n";
 			channels[i].sendToAll(rpl);
 		}
 	}
@@ -306,7 +306,7 @@ void	Server::RmChannels(int fd){
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":server " << code << " " << clientname << msg;
+	ss << ":" << this->serverName << " " << code << " " << clientname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild \n";
@@ -315,7 +315,7 @@ void Server::senderror(int code, std::string clientname, int fd, std::string msg
 void Server::senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":server " << code << " " << clientname << " " << channelname << msg;
+	ss <<  ":" << this->serverName << " " << code << " " << clientname << " " << channelname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild \n";
