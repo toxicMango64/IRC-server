@@ -65,7 +65,7 @@ void Client::setLogedin(bool value){this->logedin = value; }
 void Client::SetUsername(std::string& username){this->username = username; }
 
 void Client::setBuffer(std::string recived) {
-	recived.erase(std::remove(recived.begin(), recived.end(), '\x04'), recived.end());
+	// recived.erase(std::remove(recived.begin(), recived.end(), '\x04'), recived.end());
     if (buffer.length() + recived.length() > Server::MAX_BUF * 4) { 
         buffer.clear();
         std::cerr << "Client buffer overflow prevented. Disconnecting client (FD: " << fd << ").\n";

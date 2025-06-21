@@ -24,12 +24,14 @@ inline std::string RPL_YOURHOST(std::string nickname)
 
 inline std::string RPL_CREATED(std::string nickname)
 {
-    std::time_t t = std::time(nullptr);
-    std::tm tm = *std::localtime(&t);
+    std::time_t t = std::time(NULL);
+    char time_buf[64];
+    std::strftime(time_buf, sizeof(time_buf), "%a %b %d %Y at %H:%M:%S", std::localtime(&t));
     std::ostringstream oss;
-    oss << std::put_time(&tm, "%a %b %d %Y at %H:%M:%S %z");
-    return std::string(":") + std::string(dalchawal) + " 003 " + std::string(nickname) + " :This server was created " + oss.str() + CRLF;
+    oss << ":" << dalchawal << " 003 " << nickname << " :This server was created " << time_buf << CRLF;
+    return oss.str();
 }
+
 
 inline std::string RPL_MYINFO(std::string nickname)
 {
