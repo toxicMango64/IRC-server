@@ -146,6 +146,10 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >& token
         senderror(405, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You have joined too many channels\r\n");
         return;
     }
+    if (token[i].first.empty()) {
+        senderror(443, GetClient(fd)->GetNickName(), fd, " :Invalid channel name\r\n");
+        return ;
+    }
 
     Channel newChannel;
     newChannel.SetName(token[i].first);

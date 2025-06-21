@@ -348,7 +348,12 @@ void Server::getCmd(std::string& cmd, int fd)
 		}
 	}
     else if (command == "CAP"){
-        _sendResponse("CAP * LS :\r\n", fd);
+		if (tokens.size() == 1) 
+			return ;
+		if (tokens[1] == "LS")
+			_sendResponse("CAP * LS :\r\n", fd);
+		else if (tokens[1] == "REQ")
+        	_sendResponse("CAP * ACK :\r\n", fd);
     }
 	else if (command == "PASS")
 		client_authen(fd, cmd);

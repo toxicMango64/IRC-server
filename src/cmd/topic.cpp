@@ -41,13 +41,13 @@ void Server::Topic(std::string &cmd, int &fd)
 	}
 	if (scmd.size() == 2) {
 		if (GetChannel(nmch)->GetTopicName() == "") {
-			_sendResponse(": 331 " + GetClient(fd)->GetNickName() + " " + nmch + " :No topic is set\r\n", fd);
+			_sendResponse(":" + serverName + " 331 " + GetClient(fd)->GetNickName() + " #" + nmch + " :No topic is set\r\n", fd);
 			return ;
 		}
 		const size_t pos = GetChannel(nmch)->GetTopicName().find(':');
 		if (GetChannel(nmch)->GetTopicName() != "" && pos == std::string::npos) {
-			_sendResponse(": 332 " + GetClient(fd)->GetNickName() + " " + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n", fd);
-			_sendResponse(": 333 " + GetClient(fd)->GetNickName() + " " + nmch + " " + GetClient(fd)->GetNickName() + " " + GetChannel(nmch)->GetTime() + "\r\n", fd);
+			_sendResponse(":" + serverName + " 332 " + GetClient(fd)->GetNickName() + " :" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n", fd);
+			_sendResponse(":" + serverName + " 333 " + GetClient(fd)->GetNickName() + " " + nmch + " " + GetClient(fd)->GetNickName() + " " + GetChannel(nmch)->GetTime() + "\r\n", fd);
 			return ;
 		}
 		else {
@@ -55,8 +55,8 @@ void Server::Topic(std::string &cmd, int &fd)
 			if (pos == 0) {
 				GetChannel(nmch)->GetTopicName().erase(0, 1);
 			}
-			_sendResponse(": 332 " + GetClient(fd)->GetNickName() + " " + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n", fd);
-			_sendResponse(": 333 " + GetClient(fd)->GetNickName() + " " + nmch + " " + GetClient(fd)->GetNickName() + " " + GetChannel(nmch)->GetTime() + "\r\n", fd);
+			_sendResponse(":" + serverName + " 332 " + GetClient(fd)->GetNickName() + " #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n", fd);
+			_sendResponse(":" + serverName + " 333 " + GetClient(fd)->GetNickName() + " " + nmch + " " + GetClient(fd)->GetNickName() + " " + GetChannel(nmch)->GetTime() + "\r\n", fd);
 			return ;
 		}
 	}
@@ -77,7 +77,7 @@ void Server::Topic(std::string &cmd, int &fd)
 
 		if (tmp[2][0] == ':' && tmp[2][1] == '\0') {
 			GetChannel(nmch)->SetTopicName("");
-			// senderror(331, nmch, fd, " :No topic is set\r\n");
+			_sendResponse(":" + GetClient(fd)->getHostname() + " TOPIC #" + nmch + " :\r\n", fd);
 			return ;
 		}
 
@@ -94,7 +94,7 @@ void Server::Topic(std::string &cmd, int &fd)
 				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
             }
 			else {
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
             }
 			GetChannel(nmch)->sendToAll(rpl);
 		}
@@ -104,7 +104,7 @@ void Server::Topic(std::string &cmd, int &fd)
 			if (pos == std::string::npos) {
 				GetChannel(nmch)->SetTime(tTopic());
 				GetChannel(nmch)->SetTopicName(tmp[2]);
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
 			}
 			else {
 				const size_t poss = tmp[2].find(' ');
@@ -114,7 +114,7 @@ void Server::Topic(std::string &cmd, int &fd)
 				}
 				GetChannel(nmch)->SetTopicName(tmp[2]);
 				GetChannel(nmch)->SetTime(tTopic());
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
 			}
 			GetChannel(nmch)->sendToAll(rpl);
 		}
