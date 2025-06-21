@@ -23,6 +23,7 @@ Server &Server::operator=( Server const &src ) {
 
 Server::Server(const int port, const std::string& password) 
 	: _port(port), _password(password) {
+	this->serverName = "irc.dal.chawal";
 	int sFd = createSocket();
 
 	setNonBlocking(sFd);
@@ -360,7 +361,7 @@ void Server::getCmd(std::string& cmd, int fd)
 	if (command == "PING") {
 		std::vector<std::string> parts = splitCmd(cmd); // splitCmd should split by space
 		Client* cli = GetClient(fd);
-	
+
 		if (parts.size() < 2) {
 			// Missing argument → send error 461
 			std::string nick = cli ? cli->GetNickName() : "*";
@@ -369,10 +370,10 @@ void Server::getCmd(std::string& cmd, int fd)
 			// Valid PING with argument
 			std::string arg = parts[1];
 			if (arg[0] == ':') arg = arg.substr(1); // remove leading ':' if present
-			std::string response = ":" + this->servername + " PONG " + this->servername + " :" + arg + "\r\n";
+			std::string response = ":" + serverName + " PONG " + serverName + " :" + arg + "\r\n";
 			_sendResponse(response, fd);
 		}
-	}	
+	}
     else if (command == "CAP"){
         _sendResponse("CAP * LS :\r\n", fd);
     }
@@ -405,3 +406,21 @@ void Server::getCmd(std::string& cmd, int fd)
 		_sendResponse(ERR_NOTREGISTERED("*"), fd);
 	}
 }
+
+
+//
+//
+
+//
+///
+///
+/////
+//
+//
+///
+//
+//
+//
+///
+//
+//

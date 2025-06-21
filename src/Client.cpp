@@ -65,6 +65,7 @@ void Client::setLogedin(bool value){this->logedin = value; }
 void Client::SetUsername(std::string& username){this->username = username; }
 
 void Client::setBuffer(std::string recived) {
+	recived.erase(std::remove(recived.begin(), recived.end(), '\x04'), recived.end());
     if (buffer.length() + recived.length() > Server::MAX_BUF * 4) { // Arbitrary limit, e.g., 4 times MAX_BUF
         // Disconnect client or handle error, for now just clear buffer to prevent crash
         buffer.clear();

@@ -57,11 +57,11 @@ private:
 	struct sockaddr_in			add;
 	struct sockaddr_in			cliaddr;
 	struct pollfd				new_cli;
-	std::string 				serverName = "irc.dal.chawal";
+	std::string 				serverName;
 
 public:
 	static const int	MAX_BUF = 512;
-	static const char	buffer[MAX_BUF] __attribute__((aligned(16)));
+	static char	buffer[MAX_BUF] __attribute__((aligned(16)));
 
 	bool				isValid( void ) const;
 	static void			signalHandler(int signum);
