@@ -42,11 +42,9 @@ void Server::signalHandler(int signum) {
 		std::cerr << "\nCaught SIGQUIT (Ctrl+D). Stopping server...\n";
 	}
     else {
-        // Handle any unexpected signal
         std::cerr << "\nCaught unexpected signal. Stopping server...\n";
     }
     _signalRecvd = true;
-    // exit(1);
 }
 
 bool Server::isValid() const {
@@ -54,7 +52,7 @@ bool Server::isValid() const {
 }
 
 void Server::closeFds() {
-    struct linger linger_opt = { .l_onoff = 1, .l_linger = 0 }; // Hard close
+    struct linger linger_opt = { .l_onoff = 1, .l_linger = 0 };
 
     for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
         setsockopt(it->GetFd(), SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
@@ -75,7 +73,6 @@ void Server::closeFds() {
     }
 }
 
-// wrapper funciton for socket
 int Server::createSocket() {
 	int sFd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sFd == -1) {
@@ -85,13 +82,10 @@ int Server::createSocket() {
 	return sFd;
 }
 
-// wrapper funciton for fcntl
-// gets the current flags of the file descriptor and sets them to non blocking
 int Server::setNonBlocking(int fd) {
 	return (fcntl(fd, F_SETFL, O_NONBLOCK));
 }
 
-// wrapper funciton for fcntl
 void Server::bindSocket(int sFd) {
 	sockaddr_in addr;
 	std::memset(&addr, 0, sizeof(addr));
@@ -147,7 +141,7 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
 
 void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 
-	char buffer[MAX_BUF]; // every client gets their own buffer size
+	char buffer[MAX_BUF];
 	int clientFd = fds[clientIndex].fd;
 	std::memset(buffer, 0, MAX_BUF);
 	
@@ -165,10 +159,8 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 		fds.erase(fds.begin() + clientIndex);
 		connectedClients.erase(clientFd);
 	} else {
-		// Handle the received message here
 		logMsg("Received from client fd: {%i} : {%s}", clientFd, buffer);
 
-		// Process the message
 		Client *client = GetClient(clientFd);
 
         if (!client) {
@@ -201,7 +193,7 @@ void Server::run(int sFd) {
 
 	signal(SIGINT, Server::signalHandler);
 	signal(SIGQUIT, Server::signalHandler);
-	signal(SIGPIPE, SIG_IGN); // or MSG_NOSIGNAL flag in send() to ignore SIGPIPE on linux systems
+	signal(SIGPIPE, SIG_IGN);
 
 	logMsg("Server started on port: {%i}", _port);
 
@@ -229,7 +221,6 @@ void Server::run(int sFd) {
     closeFds();
 }
 
-/** getters */
 int Server::GetPort(){return this->_port;}
 int Server::GetFd(){return this->sfds;}
 Client *Server::GetClient(int fd){
@@ -257,7 +248,6 @@ Channel *Server::GetChannel(std::string name)
 	return NULL;
 }
 
-/** setters */
 void Server::SetFd( int fd ) { this->sfds = fd; }
 void Server::SetPort( int port ) { this->_port = port; }
 void Server::SetPassword( const std::string password ) { this->_password = password; }
@@ -321,7 +311,6 @@ void Server::senderror(int code, std::string clientname, std::string channelname
 		std::cerr << "send() faild \n";
 }
 
-// add carnage returns and new line in the end manually
 void Server::_sendResponse(std::string response, int fd)
 {
 	if(send(fd, response.c_str(), response.size(), 0) == -1)
@@ -344,32 +333,16 @@ void Server::getCmd(std::string& cmd, int fd)
 
 	std::string command = tokens[0];
 
-	// // PONG // does nothing
-	// // PING
-	// // :calcium.libera.chat 461 nick PING :Not enough parameters
-	// // PING libera.chat
-	// // :calcium.libera.chat PONG calcium.libera.chat :libera.chat
-	// // :<server-name> PONG <server-name> :<argument>
-	// if (command == "PING") {
-	// // 	if (NOTHER)
-	// // 	std::string pong =  ":server PONG" + ;
-	// // 	ss << ":server " << code << " " << clientname << " " << channelname << msg;
-	// 	_sendResponse("PONG\r\n", fd);
-
-	// }
-
 	if (command == "PING") {
-		std::vector<std::string> parts = splitCmd(cmd); // splitCmd should split by space
+		std::vector<std::string> parts = splitCmd(cmd);
 		Client* cli = GetClient(fd);
 
 		if (parts.size() < 2) {
-			// Missing argument → send error 461
 			std::string nick = cli ? cli->GetNickName() : "*";
-			_sendResponse(ERR_NOTENOUGHPARAM(nick), fd); // or manually: ":server 461 nick PING :Not enough parameters\r\n"
+			_sendResponse(ERR_NOTENOUGHPARAM(nick), fd);
 		} else {
-			// Valid PING with argument
 			std::string arg = parts[1];
-			if (arg[0] == ':') arg = arg.substr(1); // remove leading ':' if present
+			if (arg[0] == ':') arg = arg.substr(1);
 			std::string response = ":" + serverName + " PONG " + serverName + " :" + arg + "\r\n";
 			_sendResponse(response, fd);
 		}
@@ -406,21 +379,3 @@ void Server::getCmd(std::string& cmd, int fd)
 		_sendResponse(ERR_NOTREGISTERED("*"), fd);
 	}
 }
-
-
-//
-//
-
-//
-///
-///
-/////
-//
-//
-///
-//
-//
-//
-///
-//
-//

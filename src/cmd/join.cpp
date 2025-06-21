@@ -171,26 +171,22 @@ void Server::JOIN(const std::string& cmd, std::vector<std::string> tokens, int f
         Client* client = GetClient(fd);
         if (!client) return;
     
-        // Remove user from all channels
-        for (size_t j = 0; j < this->channels.size(); /* no increment here */) {
+        for (size_t j = 0; j < this->channels.size();) {
             Channel& channel = channels[j];
             if (channel.get_client(fd) != NULL || channel.get_admin(fd) != NULL) {
-                // Send PART message to all users in the channel
                 std::stringstream ss;
                 ss << ":" << client->GetNickName() << "!~" << client->GetUserName()
-                   << "@server PART #" << channel.GetName() << "\r\n";
+                   << "@irc.dal.chawal PART #" << channel.GetName() << "\r\n";
                 channel.sendToAll(ss.str());
-    
-                // Remove user from admin/client lists
+
                 if (channel.get_admin(fd) != NULL)
                     channel.remove_admin(fd);
                 else
                     channel.remove_client(fd);
     
-                // If channel is now empty, erase it
                 if (channel.GetClientsNumber() == 0) {
                     channels.erase(channels.begin() + j);
-                    continue ; // don't increment j, as vector has shifted
+                    continue ;
                 }
             }
             ++j;

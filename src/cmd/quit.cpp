@@ -1,6 +1,6 @@
 #include "../../inc/Server.hpp"
-#include <iostream>  // for std::cout
-#include <sstream>   // for std::istringstream
+#include <iostream>
+#include <sstream>
 
 void FindQ(const std::string& cmd, const std::string& to_find, std::string& str)
 {
@@ -65,7 +65,7 @@ std::string SplitQuit(const std::string& cmd)
 void Server::QUIT(const std::string& cmd, int fd) {
 	const std::string reason = SplitQuit(cmd);
 
-	for (size_t i = 0; i < channels.size(); /* increment inside */) {
+	for (size_t i = 0; i < channels.size();) {
 		if (channels[i].get_client(fd) != NULL) {
 			channels[i].remove_client(fd);
 			if (channels[i].GetClientsNumber() == 0) {
@@ -73,7 +73,7 @@ void Server::QUIT(const std::string& cmd, int fd) {
 				continue ;
 			}
 			else {
-				const std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server QUIT " + reason + "\r\n";
+				const std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@irc.dal.chawal QUIT " + reason + "\r\n";
 				channels[i].sendToAll(rpl);
 			}
 		}
@@ -84,7 +84,7 @@ void Server::QUIT(const std::string& cmd, int fd) {
 				continue ;
 			}
 			else {
-				const std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@server QUIT " + reason + "\r\n";
+				const std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@irc.dal.chawal QUIT " + reason + "\r\n";
 				channels[i].sendToAll(rpl);
 			}
 		}

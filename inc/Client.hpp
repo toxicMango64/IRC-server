@@ -1,4 +1,3 @@
-// Client.hpp
 #pragma once
 
 #include <string>
@@ -27,7 +26,7 @@ class Client {
 		void	RmChannelInvite(std::string &chname);
 		void	handleBuffer(Client& client, const char buf[512], const std::string& password, std::string& output);
 
-		/** getters */
+
 		int				GetFd();
 		bool			getRegistered();
 		bool			GetInviteChannel(std::string &ChName);
@@ -38,7 +37,7 @@ class Client {
 		std::string		getBuffer();
 		std::string		getHostname();
 		
-		/** setters */
+
 		void	SetFd(int fd);
 		void	SetNickname(std::string& nickName);
 		void	setLogedin(bool value);

@@ -90,10 +90,10 @@ void Server::Topic(std::string &cmd, int &fd)
 			std::string rpl;
 			const size_t pos = tmp[2].find(':');
 			if (pos == std::string::npos) {
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@server TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " :" + GetChannel(nmch)->GetTopicName() + "\r\n";
             }
 			else {
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@server TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
             }
 			GetChannel(nmch)->sendToAll(rpl);
 		}
@@ -103,7 +103,7 @@ void Server::Topic(std::string &cmd, int &fd)
 			if (pos == std::string::npos) {
 				GetChannel(nmch)->SetTime(tTopic());
 				GetChannel(nmch)->SetTopicName(tmp[2]);
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@server TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
 			}
 			else {
 				const size_t poss = tmp[2].find(' ');
@@ -113,7 +113,7 @@ void Server::Topic(std::string &cmd, int &fd)
 				}
 				GetChannel(nmch)->SetTopicName(tmp[2]);
 				GetChannel(nmch)->SetTime(tTopic());
-				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@server TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
+				rpl = ":" + GetClient(fd)->GetNickName() + "!" + GetClient(fd)->GetUserName() + "@irc.dal.chawal TOPIC #" + nmch + " " + GetChannel(nmch)->GetTopicName() + "\r\n";
 			}
 			GetChannel(nmch)->sendToAll(rpl);
 		}

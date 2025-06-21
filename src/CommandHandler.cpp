@@ -57,7 +57,6 @@ bool isValidNickname(const std::string& nickname) {
     if (nickname.empty() || nickname.length() > 9) {
         return false;
     }
-    // Nicknames must start with a letter and can contain letters, numbers, and specific symbols, alphanumeric in short
     if (!std::isalpha(nickname[0])) {
         return false;
     }

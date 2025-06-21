@@ -55,7 +55,7 @@ std::string Client::GetUserName( ) { return this->username; }
 std::string Client::getBuffer( ) { return buffer; }
 std::string Client::getIpAdd( ) { return ipadd; }
 std::string Client::getHostname( ) {
-	std::string hostname = this->GetNickName() + "!" + this->GetUserName();
+	std::string hostname = this->GetNickName() + "!~" + this->GetUserName() + "@" + "irc.dal.chawal";
 	return hostname;
 }
 
@@ -66,12 +66,9 @@ void Client::SetUsername(std::string& username){this->username = username; }
 
 void Client::setBuffer(std::string recived) {
 	recived.erase(std::remove(recived.begin(), recived.end(), '\x04'), recived.end());
-    if (buffer.length() + recived.length() > Server::MAX_BUF * 4) { // Arbitrary limit, e.g., 4 times MAX_BUF
-        // Disconnect client or handle error, for now just clear buffer to prevent crash
+    if (buffer.length() + recived.length() > Server::MAX_BUF * 4) { 
         buffer.clear();
         std::cerr << "Client buffer overflow prevented. Disconnecting client (FD: " << fd << ").\n";
-        // In a real scenario, you would signal the server to disconnect this client.
-        // For now, just clearing the buffer to prevent a crash.
         return ;
     }
     buffer += recived;

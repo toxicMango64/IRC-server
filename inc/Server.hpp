@@ -1,4 +1,3 @@
-// Server.hpp
 #pragma once
 
 #if defined(_MSC_VER)
@@ -33,7 +32,7 @@
 #include "Channel.hpp"
 #include "CommandHandler.hpp"
 
-// enum class e_irc : std::uint16_t {
+
 enum e_irc {
 	MIN_PORT = 0,
 	MAX_PORT = 65535,
@@ -44,7 +43,6 @@ class Channel;
 
 class Server {
 private:
-	// static const int MAX_BUF = 512;
 	int _port;
 	std::string _password;
 	static bool _signalRecvd;
@@ -73,7 +71,7 @@ public:
 	Server( int port, const std::string& password );
 
 	void	run( int sFd );
-	void	closeFds( void ); /** implement the fucntion */
+	void	closeFds( void );
 	int		createSocket( void );
 	void	bindSocket( int sFd );
 	int		setNonBlocking( int fd );
@@ -107,16 +105,11 @@ public:
 	void	senderror( int code, std::string clientname, std::string channelname, int fd, std::string msg );
 	void	_sendResponse( std::string response, int fd );
 
-	// void	init( int port, std::string pass );
-	// void	accept_new_client( );
-	// void	set_sever_socket( );
-	// void	reciveNewData( int fd );
 
 	void	getCmd( std::string &cmd, int fd );
 	std::vector<std::string>	splitCmd( std::string &str );
 
 	bool nickNameInUse( std::string& nickname );
-	// bool isValidNickname( std::string& nickname );
 	void client_authen( int fd, std::string pass );
 
 	void	JOIN(const std::string& cmd, std::vector<std::string> tokens, int fd);
@@ -138,7 +131,6 @@ public:
 
 	void 		mode_command( std::string& cmd, int fd );
 	std::string invite_only(Channel* channel, char opera, const std::string& chain);
-	// std::string topicRestricted( Channel *channel ,char opera, std::string chain );
 	std::string topic_restriction(Channel* channel, char opera, const std::string& chain);
 	std::string password_mode(const std::vector<std::string>& tokens, Channel* channel, size_t& pos, char opera, int fd, const std::string& chain, std::string& arguments);
 	std::string operator_privilege(const std::vector<std::string>& tokens, Channel* channel, size_t& pos, int fd, char opera, const std::string& chain, std::string& arguments);
@@ -150,8 +142,4 @@ public:
 
 	void Topic( std::string &cmd, int &fd );
 	void Invite( std::string &cmd, int &fd );
-	// std::string tTopic(  );
-	// std::string gettopic( std::string& input );
-	// int getpos( std::string &cmd );
-
 };
