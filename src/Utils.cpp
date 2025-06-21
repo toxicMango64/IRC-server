@@ -54,7 +54,7 @@ bool validatePort(const std::string& portStr, int& result) {
         std::cerr << "Error: Invalid port number format.\n";
         return false;
     }
-    if (result <= 1024 || result > 65535) {
+    if (result < 1024 || result > 65535) {
         std::cerr << "Error: Port must be between Common range for non-privileged ports (1025 - 65535).\n";
         return false;
     }
