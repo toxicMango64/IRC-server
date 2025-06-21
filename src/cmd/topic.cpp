@@ -76,7 +76,8 @@ void Server::Topic(std::string &cmd, int &fd)
 		}
 
 		if (tmp[2][0] == ':' && tmp[2][1] == '\0') {
-			senderror(331, nmch, fd, " :No topic is set\r\n");
+			GetChannel(nmch)->SetTopicName("");
+			// senderror(331, nmch, fd, " :No topic is set\r\n");
 			return ;
 		}
 
