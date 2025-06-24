@@ -1,13 +1,6 @@
-// Utils.hpp
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
-// # include "Server.hpp"
-
-// In header file (e.g., Utils.hpp)
-// extern std::string CRLF;
-
-// #include <atomic>
 #include <iostream>
 #include <sstream>
 #include <cstdarg>
@@ -15,40 +8,15 @@
 #include <cstring>
 #include <iomanip>
 #include <ctime>
-#include <vector>
 
 bool validatePort( const std::string& portStr, int& result );
 bool validatePassword( const std::string& password );
-bool isValidNickname(const std::string& nickname); // Declaring isValidNickname
-std::vector<std::string> splitReceivedBuffer(const std::string& str);
-
-// // Compiler-specific macros for optimizations
-// #if defined(_MSC_VER)
-//   #define COLD_FN __declspec(noinline)
-//   #define LIKELY(x) (x)
-//   #define UNLIKELY(x) (x)
-// #elif defined(__GNUC__) || defined(__clang__)
-//   #define COLD_FN __attribute__((cold)) __attribute__((noinline))
-//   #define LIKELY(x) __builtin_expect(!!(x), 1)
-//   #define UNLIKELY(x) __builtin_expect(!!(x), 0)
-// #else
-//   #define COLD_FN
-//   #define LIKELY(x) (x)
-//   #define UNLIKELY(x) (x)
-// #endif
 
 #ifndef DEBUG_MODE /* DEBUG_MODE */
 # define DEBUG_MODE true /* Set to false to disable debug output */
 #endif /* DEBUG_MODE */
 
-// // Lightweight global toggle (can be changed at runtime too)
-// static constexpr bool kDebugEnabled = DEBUG_MODE;
-
-// Optional: Enable if you're not using C++20's std::format
 #define USE_SIMPLE_FORMATTER
-
-// // Lock to avoid mangled logs from concurrent threads
-// static std::mutex log_mutex;
 
 #if defined(_MSC_VER)
 #define COLD_FN __declspec(noinline)
@@ -59,6 +27,7 @@ std::vector<std::string> splitReceivedBuffer(const std::string& str);
 #endif
 
 COLD_FN inline void logMsg(const char* format, ...) {
+(void)format;
 #if DEBUG_MODE
 
 	if (!format) return;
@@ -116,4 +85,4 @@ COLD_FN inline void logMsg(const char* format, ...) {
 #endif
 }
 
-#endif // UTILS_HPP
+#endif

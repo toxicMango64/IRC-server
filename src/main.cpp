@@ -28,18 +28,10 @@ int main(const int ac, const char *const *av) {
 		return (1);
 	}
 
-	Server server(port, av[2]);
-	
-	// Signal handling is now managed within Server::run()
-	// The Server::SignalHandler sets a flag for graceful shutdown.
+	Server server;
 
 	try {
-		int sFd = server.createSocket();
-
-		server.setNonBlocking(sFd);
-		server.bindSocket(sFd);
-		server.startListening(sFd);
-		server.run(sFd);
+		server = Server(port, av[2]);
 
 	} catch (const std::exception& e) {
 		logMsg("Exception caught: %s", e.what());

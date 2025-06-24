@@ -21,7 +21,7 @@ void FindPM(const std::string& cmd, const std::string& tofind, std::string& str)
         str = cmd.substr(i);
     }
     i = 0;
-    for (; i < str.size() && str[i] == ' '; i++) { /** skip spaces */ }
+    for (; i < str.size() && str[i] == ' '; i++) { }
     str = str.substr(i);
 }
 
@@ -122,7 +122,7 @@ void Server::PRIVMSG(const std::string& cmd, int fd)
     }
     if (message.empty()) {
         senderror(412, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :No text to send\r\n");
-        return;
+        return ;
     }
     if (tmp.size() > 10) {
         senderror(407, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Too many recipients\r\n");
@@ -132,11 +132,11 @@ void Server::PRIVMSG(const std::string& cmd, int fd)
     for (size_t i = 0; i < tmp.size(); i++) {
         if (!tmp[i].empty() && tmp[i][0] == '#') {
             tmp[i].erase(tmp[i].begin());
-            const std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG #" + tmp[i] + " :" + message + "\r\n";
-            GetChannel(tmp[i])->sendTo_all(resp, fd);
+            const std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@irc.dal.chawal PRIVMSG #" + tmp[i] + " :" + cmd + "\r\n";
+            GetChannel(tmp[i])->sendToAllExcept(resp, fd);
         }
         else {
-            const std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost PRIVMSG " + tmp[i] + " :" + message + "\r\n";
+            const std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@irc.dal.chawal PRIVMSG " + tmp[i] + " :" + message + "\r\n";
             _sendResponse(resp, GetClientNick(tmp[i])->GetFd());
         }
     }

@@ -1,4 +1,3 @@
-// Server.hpp
 #pragma once
 
 #if defined(_MSC_VER)
@@ -33,11 +32,10 @@
 #include "Channel.hpp"
 #include "CommandHandler.hpp"
 
-// enum class e_irc : std::uint16_t {
+
 enum e_irc {
 	MIN_PORT = 0,
 	MAX_PORT = 65535,
-	MAX_INT_INDEX = 10
 };
 
 class Client;
@@ -45,24 +43,26 @@ class Channel;
 
 class Server {
 private:
-	// static const int MAX_BUF = 512;
 	int _port;
 	std::string _password;
-	static bool Signal;
+	static bool _signalRecvd;
 
 	int							sfds;
 	std::map<int, Client>		connectedClients;
+	std::vector<Client>			clients;
 	std::vector<Channel>		channels;
 	std::vector<struct pollfd>	fds;
 	struct sockaddr_in			add;
 	struct sockaddr_in			cliaddr;
 	struct pollfd				new_cli;
+	std::string 				serverName;
 
 public:
-	static const int	MAX_BUF = 512;
+	// static const int	MAX_BUF = 512;
+	// static char	buffer[MAX_BUF] __attribute__((aligned(16)));
 
 	bool				isValid( void ) const;
-	// static void			signalHandler(int signum) __attribute__ ((__noreturn__)); // Removed duplicate/unused declaration
+	static void			signalHandler(int signum);
 
 	Server();
 	~Server();
@@ -72,13 +72,13 @@ public:
 
 	void	run( int sFd );
 	void	closeFds( void );
-	static void SignalHandler( int signum ); // This is the active signal handler
 	int		createSocket( void );
 	void	bindSocket( int sFd );
 	int		setNonBlocking( int fd );
 	void	startListening( int sFd );
-	void	handleClientMessage( size_t i, std::vector<pollfd>& fds );
-	void	handleNewConnection( int sFd, std::vector<pollfd>& fds );
+	void	handleClientMessage( size_t i );
+	void	handleNewConnection( int sFd );
+	void	handleClientWrite( size_t clientIndex ); // New method for POLLOUT
 
 	int	GetPort( );
 	int	GetFd( );
@@ -91,7 +91,7 @@ public:
 	void	SetFd( int sfds );
 	void	SetPort( int port );
 	void	SetPassword( std::string password );
-	// void	AddClient( Client newClient ); // Removed, clients added directly to map
+	void	AddClient( Client newClient );
 	void	AddChannel( Channel newChannel );
 	void	AddFds( pollfd newFd );
 	void	set_username( std::string& username, int fd );
@@ -106,22 +106,14 @@ public:
 	void	senderror( int code, std::string clientname, std::string channelname, int fd, std::string msg );
 	void	_sendResponse( std::string response, int fd );
 
-	// void	init( int port, std::string pass );
-	// void	accept_new_client( );
-	// void	set_sever_socket( );
-	// void	reciveNewData( int fd );
 
 	void	getCmd( std::string &cmd, int fd );
 	std::vector<std::string>	splitCmd( std::string &str );
 
-	bool notregistered( int fd );
 	bool nickNameInUse( std::string& nickname );
-	// bool is_validNickname( std::string& nickname );
 	void client_authen( int fd, std::string pass );
-	void registerClient(Client *client, int fd);
-	Client* getClientOrReturn(int fd);
 
-	void	JOIN(const std::string& cmd, int fd);
+	void	JOIN(const std::string& cmd, std::vector<std::string> tokens, int fd);
 	int		SplitJoin(std::vector<std::pair<std::string, std::string> > &token, const std::string& cmd, int fd);
 	void	ExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, size_t j, int fd);
 	void	NotExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, int fd);
@@ -140,7 +132,6 @@ public:
 
 	void 		mode_command( std::string& cmd, int fd );
 	std::string invite_only(Channel* channel, char opera, const std::string& chain);
-	// std::string topicRestricted( Channel *channel ,char opera, std::string chain );
 	std::string topic_restriction(Channel* channel, char opera, const std::string& chain);
 	std::string password_mode(const std::vector<std::string>& tokens, Channel* channel, size_t& pos, char opera, int fd, const std::string& chain, std::string& arguments);
 	std::string operator_privilege(const std::vector<std::string>& tokens, Channel* channel, size_t& pos, int fd, char opera, const std::string& chain, std::string& arguments);
@@ -152,8 +143,4 @@ public:
 
 	void Topic( std::string &cmd, int &fd );
 	void Invite( std::string &cmd, int &fd );
-	// std::string tTopic(  );
-	// std::string gettopic( std::string& input );
-	// int getpos( std::string &cmd );
-
 };

@@ -20,7 +20,7 @@ void FindPR(const std::string& tofind, const std::string& cmd, std::string &str)
         str = cmd.substr(i);
     }
     i = 0;
-    for (; i < str.size() && str[i] == ' '; i++) { /** skip spaces */ }
+    for (; i < str.size() && str[i] == ' '; i++) { }
     str = str.substr(i);
 }
 
@@ -51,7 +51,7 @@ int Server::SplitCmdPart(const std::string& cmd, std::vector<std::string> &tmp, 
     std::string str = tmp[0];
     std::string str1;
     tmp.clear();
-    for (size_t i = 0; i < str.size(); i++) { // split by ','
+    for (size_t i = 0; i < str.size(); i++) {
         if (str[i] == ',') {
             tmp.push_back(str1);
             str1.clear();
@@ -103,18 +103,18 @@ void Server::PART(const std::string& cmd, int fd) {
         for (size_t j = 0; j < this->channels.size(); j++) {
             if (this->channels[j].GetName() == tmp[i]) {
                 flag = true;
-                if (channels[j].get_client(fd) == NULL && channels[j].get_admin(fd) == NULL) { // not on channel
+                if (channels[j].get_client(fd) == NULL && channels[j].get_admin(fd) == NULL) {
                     senderror(442, GetClient(fd)->GetNickName(), "#" + tmp[i], GetClient(fd)->GetFd(), " :You're not on that channel\r\n");
                     continue ;
                 }
                 std::stringstream ss;
-                ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@" << "localhost" << " PART #" << tmp[i];
+                ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName() << "@irc.dal.chawal" << " PART #" << tmp[i];
                 if (!reason.empty()) {
                     ss << " :" << reason << "\r\n";
                 } else {
                     ss << "\r\n";
                 }
-                channels[j].sendTo_all(ss.str());
+                channels[j].sendToAll(ss.str());
                 Client* clientPtr = channels[j].GetClientInChannel(GetClient(fd)->GetNickName());
                 if (clientPtr != NULL && channels[j].get_admin(clientPtr->GetFd()) != NULL) {
                     channels[j].remove_admin(clientPtr->GetFd());

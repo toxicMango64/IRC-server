@@ -124,18 +124,17 @@ Client *Channel::get_admin(int fd){
 	return NULL;
 }
 
-Client* Channel::findClientInList(const std::string& name, std::vector<Client>& clientList) {
-    for (std::vector<Client>::iterator it = clientList.begin(); it != clientList.end(); ++it) {
-        if (it->GetNickName() == name)
-            return &(*it);
-    }
-    return NULL;
-}
-
-Client* Channel::GetClientInChannel(std::string name) {
-    Client* client = findClientInList(name, clients);
-    if (client) return client;
-    return findClientInList(name, admins);
+Client* Channel::GetClientInChannel(std::string name)
+{
+	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it){
+		if (it->GetNickName() == name)
+			return &(*it);
+	}
+	for (std::vector<Client>::iterator it = admins.begin(); it != admins.end(); ++it){
+		if (it->GetNickName() == name)
+			return &(*it);
+	}
+	return NULL;
 }
 
 void Channel::add_client(Client newClient){clients.push_back(newClient);}
@@ -156,57 +155,59 @@ void Channel::remove_admin(int fd){
 	}
 }
 
-bool Channel::moveClientBetweenLists(std::string& nick, std::vector<Client>& sourceList, std::vector<Client>& destList) {
-    size_t i = 0;
-    for (; i < sourceList.size(); i++) {
-        if (sourceList[i].GetNickName() == nick)
-            break;
-    }
-    if (i < sourceList.size()) {
-        destList.push_back(sourceList[i]);
-        sourceList.erase(sourceList.begin() + i);
-        return true;
-    }
-    return false;
+bool Channel::change_clientToAdmin(std::string& nick){
+	size_t i = 0;
+	for(; i < clients.size(); i++){
+		if(clients[i].GetNickName() == nick)
+			break;
+	}
+	if(i < clients.size()){
+		admins.push_back(clients[i]);
+		clients.erase(i + clients.begin());
+		return true;
+	}
+	return false;
 }
 
-bool Channel::change_clientToAdmin(std::string& nick) {
-    return moveClientBetweenLists(nick, clients, admins);
+bool Channel::change_adminToClient(std::string& nick){
+	size_t i = 0;
+	for (; i < admins.size(); i++) {
+		if(admins[i].GetNickName() == nick)
+			break;
+	}
+	if (i < admins.size()) {
+		clients.push_back(admins[i]);
+		admins.erase(i + admins.begin());
+		return true;
+	}
+	return false;
+
 }
 
-bool Channel::change_adminToClient(std::string& nick) {
-    return moveClientBetweenLists(nick, admins, clients);
-}
-
-void Channel::sendTo_all(std::string rpl1)
+void Channel::sendToAll(std::string msg)
 {
 	for (size_t i = 0; i < admins.size(); i++) {
-		if (send(admins[i].GetFd(), rpl1.c_str(), rpl1.size(),0) == -1) {
-			std::cerr << "send() faild \n";
+		if (send(admins[i].GetFd(), msg.c_str(), msg.size(),0) == -1) {
+			std::cerr << "send() failed \n";
 		}
 	}
 	for (size_t i = 0; i < clients.size(); i++) {
-		if (send(clients[i].GetFd(), rpl1.c_str(), rpl1.size(),0) == -1) {
-			std::cerr << "send() faild \n";
+		if (send(clients[i].GetFd(), msg.c_str(), msg.size(),0) == -1) {
+			std::cerr << "send() failed \n";
 		}
 	}
 }
 
-void Channel::sendTo_all(std::string rpl1, int fd)
-{
-    sendToAllExcept(fd, rpl1);
-}
-
-void Channel::sendToAllExcept(int excludeFd, const std::string& message) {
+void Channel::sendToAllExcept(const std::string& msg, int excludeFd) {
     for (size_t i = 0; i < admins.size(); i++) {
         if (admins[i].GetFd() != excludeFd)
-            if (send(admins[i].GetFd(), message.c_str(), message.size(), 0) == -1) {
+            if (send(admins[i].GetFd(), msg.c_str(), msg.size(), 0) == -1) {
                 std::cerr << "send() failed \n";
             }
     }
     for (size_t i = 0; i < clients.size(); i++) {
         if (clients[i].GetFd() != excludeFd)
-            if (send(clients[i].GetFd(), message.c_str(), message.size(), 0) == -1) {
+            if (send(clients[i].GetFd(), msg.c_str(), msg.size(), 0) == -1) {
                 std::cerr << "send() failed \n";
             }
     }

@@ -1,4 +1,3 @@
-// Client.hpp
 #pragma once
 
 #include <string>
@@ -25,25 +24,30 @@ class Client {
 		void	clearBuffer();
 		void	AddChannelInvite(std::string &chname);
 		void	RmChannelInvite(std::string &chname);
+		void	handleBuffer(Client& client, const char buf[512], const std::string& password, std::string& output);
 
-		/** getters */
+
 		int				GetFd();
-		ClientState		getState() const; // New getter for ClientState
+		bool			getRegistered();
 		bool			GetInviteChannel(std::string &ChName);
 		std::string		GetNickName();
+		bool			GetLogedIn();
 		std::string		GetUserName();
 		std::string		getIpAdd();
 		std::string		getBuffer();
 		std::string		getHostname();
-		const std::set<std::string>& GetJoinedChannels() const;
+		std::string&	getOutgoingBuffer(); // New method
 		
-		/** setters */
+
 		void	SetFd(int fd);
 		void	SetNickname(std::string& nickName);
+		void	setLogedin(bool value);
 		void	SetUsername(std::string& username);
 		void	setBuffer(std::string recived);
-		void	setState(ClientState newState); // New setter for ClientState
+		void	setRegistered(bool value);
 		void	setIpAdd(std::string ipadd);
+		void	appendOutgoing(const std::string& data); // New method
+		void	clearOutgoingBuffer(size_t bytesSent); // New method
 
 
 	private:
@@ -54,8 +58,13 @@ class Client {
 		ClientState             state;
 		std::set<std::string>   channels;
 		bool                    isOperator;
-		std::string				buffer;
+		bool 					registered;
 		std::string				ipadd;
+		bool					logedin;
+		// std::string				buffer;
+		static const int		MAX_BUF = 512;
+		static char	buffer[MAX_BUF]	__attribute__((aligned(16)));
+		std::string				_outgoingBuffer; // Buffer for data to be sent
 		
 		std::vector<std::string>	ChannelsInvite;
 

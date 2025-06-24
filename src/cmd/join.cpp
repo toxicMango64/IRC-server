@@ -71,6 +71,16 @@ int Server::SplitJoin(std::vector<std::pair<std::string, std::string> > &token, 
     return 1;
 }
 
+int Server::SearchForClients(const std::string& nickname)
+{
+    int count = 0;
+    for (size_t i = 0; i < this->channels.size(); i++) {
+        if (this->channels[i].GetClientInChannel(nickname) != NULL) {
+            count++;
+        }
+    }
+    return count;
+}
 
 bool IsInvited(Client* cli, std::string ChName, int flag)
 {
@@ -89,7 +99,7 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >& token, s
         return;
     }
 
-    if (GetClient(fd)->GetJoinedChannels().size() >= 10) {
+    if (SearchForClients(GetClient(fd)->GetNickName()) >= 10) {
         senderror(405, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You have joined too many channels\r\n");
         return;
     }
@@ -102,13 +112,13 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >& token, s
     }
 
     if (this->channels[j].GetInvitOnly()) {
-        if (this->channels[j].GetInvitOnly() && !IsInvited(GetClient(fd), token[i].first, 1)) {
+        if (!IsInvited(GetClient(fd), token[i].first, 1)) {
             senderror(473, GetClient(fd)->GetNickName(), "#" + token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+i)\r\n");
             return;
         }
     }
 
-    if (this->channels[j].GetLimit() != 0 && this->channels[j].GetClientsNumber() >= this->channels[j].GetLimit()) {
+    if (this->channels[j].GetLimit() && this->channels[j].GetClientsNumber() >= this->channels[j].GetLimit()) {
         senderror(471, GetClient(fd)->GetNickName(), "#" + token[i].first, GetClient(fd)->GetFd(), " :Cannot join channel (+l)\r\n");
         return;
     }
@@ -127,14 +137,18 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >& token, s
                       RPL_ENDOFNAMES(GetClient(fd)->GetNickName(), channels[j].GetName()), fd);
     }
 
-    channels[j].sendTo_all(RPL_JOINMSG(GetClient(fd)->getHostname(), GetClient(fd)->getIpAdd(), token[i].first), fd);
+    channels[j].sendToAllExcept(RPL_JOINMSG(GetClient(fd)->getHostname(), GetClient(fd)->getIpAdd(), token[i].first), fd);
 }
 
 void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, int fd)
 {
-    if (GetClient(fd)->GetJoinedChannels().size() >= 10) {
+    if (SearchForClients(GetClient(fd)->GetNickName()) >= 10) {
         senderror(405, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :You have joined too many channels\r\n");
         return;
+    }
+    if (token[i].first.empty()) {
+        senderror(443, GetClient(fd)->GetNickName(), fd, " :Invalid channel name\r\n");
+        return ;
     }
 
     Channel newChannel;
@@ -148,7 +162,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >& token
                   RPL_ENDOFNAMES(GetClient(fd)->GetNickName(), newChannel.GetName()), fd);
 }
 
-void Server::JOIN(const std::string& cmd, int fd)
+void Server::JOIN(const std::string& cmd, std::vector<std::string> tokens, int fd)
 {
     std::vector<std::pair<std::string, std::string > > token;
 
@@ -157,6 +171,33 @@ void Server::JOIN(const std::string& cmd, int fd)
         return;
     }
 
+    if (tokens.size() == 2 && tokens[1] == "0") {
+        Client* client = GetClient(fd);
+        if (!client) return;
+    
+        for (size_t j = 0; j < this->channels.size();) {
+            Channel& channel = channels[j];
+            if (channel.get_client(fd) != NULL || channel.get_admin(fd) != NULL) {
+                std::stringstream ss;
+                ss << ":" << client->GetNickName() << "!~" << client->GetUserName()
+                   << "@irc.dal.chawal PART #" << channel.GetName() << "\r\n";
+                channel.sendToAll(ss.str());
+
+                if (channel.get_admin(fd) != NULL)
+                    channel.remove_admin(fd);
+                else
+                    channel.remove_client(fd);
+    
+                if (channel.GetClientsNumber() == 0) {
+                    channels.erase(channels.begin() + j);
+                    continue ;
+                }
+            }
+            ++j;
+        }
+        return;
+    }
+    
     if (token.size() > 10) {
         senderror(407, GetClient(fd)->GetNickName(), GetClient(fd)->GetFd(), " :Too many channels\r\n");
         return;

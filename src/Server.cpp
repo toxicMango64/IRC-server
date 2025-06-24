@@ -1,78 +1,97 @@
-#include "../inc/Server.hpp"
-#include <stdexcept>
-#include <sys/socket.h>
 #include <csignal>
+#include <netinet/tcp.h>
+#include <stdexcept>
+#include <stdlib.h>
+#include <sys/socket.h>
 #include "Response.hpp"
+#include "Server.hpp"
+
+Server::Server() { }
+Server::~Server( ) { }
+Server::Server( Server const &src ) { *this = src; }
+Server &Server::operator=( Server const &src ) {
+	if (this != &src) {
+		this->_port = src._port;
+		this->sfds = src.sfds;
+		this->_password = src._password;
+		this->clients = src.clients;
+		this->channels = src.channels;
+		this->fds = src.fds;
+		this->connectedClients = src.connectedClients;
+	}
+	return (*this);
+}
 
 Server::Server(const int port, const std::string& password) 
-	: _port(port), _password(password) {}
+	: _port(port), _password(password) {
+	this->serverName = "irc.dal.chawal";
+	int sFd = createSocket();
+
+	if (setNonBlocking(sFd) == -1) {
+		throw std::runtime_error("Failed to set non-blocking mode for client socket");
+	}
+	// if (fcntl(sFd, F_SETFL, O_NONBLOCK) == -1) {
+	// 	throw (std::runtime_error("A negative value recievied from fcntl: "));
+	// }
+	bindSocket(sFd);
+	startListening(sFd);
+	run(sFd);
+}
+
+bool Server::_signalRecvd = false;
+
+void Server::signalHandler(int signum) {
+	if (signum == SIGINT) {
+		std::cerr << "\nCaught SIGINT (Ctrl+C). Stopping server...\n";
+	} 
+	else if (signum == SIGQUIT) {
+		std::cerr << "\nCaught SIGQUIT (Ctrl+D). Stopping server...\n";
+	}
+	else {
+		std::cerr << "\nCaught unexpected signal. Stopping server...\n";
+	}
+	_signalRecvd = true;
+}
 
 bool Server::isValid() const {
 	return (_port >= MIN_PORT && _port <= MAX_PORT) && !_password.empty();
 }
 
-void	Server::closeFds(){
+void Server::closeFds() {
+	struct linger linger_opt = { .l_onoff = 1, .l_linger = 0 };
+
+	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
+		setsockopt(it->GetFd(), SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
+		std::cout << "Client <" << it->GetFd() << "> Disconnected \n";
+		close(it->GetFd());
+	}
+
 	for (std::map<int, Client>::iterator it = connectedClients.begin(); it != connectedClients.end(); ++it) {
 		std::cout << "Client <" << it->first << "> Disconnected \n";
 		close(it->first);
 	}
-	connectedClients.clear(); // Clear the map
-	if (sfds != -1){	
-		std::cout << "Server <" << sfds << "> Disconnected \n";
-		close(sfds);
+
+	connectedClients.clear();
+
+	if (this->sfds != -1) {
+		std::cout << "Server <" << this->sfds << "> Disconnected \n";
+		close(this->sfds);
 	}
 }
 
-std::vector<std::string> Server::splitCmd(std::string& cmd)
-{
-	std::vector<std::string> vec;
-	std::istringstream stm(cmd);
-	std::string token;
-	while(stm >> token)
-	{
-		vec.push_back(token);
-		token.clear();
-	}
-	return vec;
+int Server::setNonBlocking(int fd) {
+	return (fcntl(fd, F_SETFL, O_NONBLOCK));
 }
 
-bool Server::nickNameInUse(std::string& nickname) {
-	for (std::map<int, Client>::iterator it = connectedClients.begin(); it != connectedClients.end(); ++it)
-	{
-		if (it->second.GetNickName() == nickname)
-			return true;
-	}
-	return false;
-}
-
-// wrapper funciton for socket
 int Server::createSocket() {
 	int sFd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sFd == -1) {
 		throw (std::runtime_error("Failed to create socket: "));
 	}
+	SetFd(sFd);
 	return sFd;
 }
 
-// wrapper funciton for fcntl
-// gets the current flags of the file descriptor and sets them to non blocking
-int Server::setNonBlocking(int fd) {
-	int flags = fcntl(fd, F_GETFL, 0);
-	if (flags == -1) {
-		return (-1);
-	}
-	
-	flags |= O_NONBLOCK;
-	
-	int ret = fcntl(fd, F_SETFL, flags);
-	if (ret == -1) {
-		return (-1);
-	}
-	
-	return (0);
-}
-
-// wrapper funciton for fcntl
 void Server::bindSocket(int sFd) {
 	sockaddr_in addr;
 	std::memset(&addr, 0, sizeof(addr));
@@ -80,7 +99,11 @@ void Server::bindSocket(int sFd) {
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port = htons(this->_port);
 
-        if (bind(sFd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) == -1) {
+	int yes = 1;
+	if (setsockopt(sFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
+		throw std::runtime_error("Failed to set SO_REUSEADDR");
+	}
+	if (bind(sFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1) {
 		throw std::runtime_error("Failed to bind socket:");
 	}
 }
@@ -91,13 +114,12 @@ void Server::startListening(int sFd) {
 	}
 }
 
-void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
-	Client cli;
+void Server::handleNewConnection(int sFd) {
 	sockaddr_in clientAddr;
 	std::memset(&clientAddr, 0, sizeof(clientAddr));
 	socklen_t addrLen = sizeof(clientAddr);
 
-        int clientFd = accept(sFd, reinterpret_cast<struct sockaddr*>(&clientAddr), &addrLen);
+	int clientFd = accept(sFd, (struct sockaddr*)&clientAddr, &addrLen);
 	if (clientFd == -1) {
 		throw std::runtime_error("Failed to accept new connection: " + std::string(strerror(errno)));
 	}
@@ -110,29 +132,23 @@ void Server::handleNewConnection(int sFd, std::vector<pollfd>& fds) {
 	clientPoll.fd = clientFd;
 	clientPoll.events = POLLIN;
 	clientPoll.revents = 0;
-	fds.push_back(clientPoll);
+	this->fds.push_back(clientPoll);
 
 	try {
 		connectedClients.insert(std::make_pair(clientFd, Client(clientFd)));
+		AddClient(Client(clientFd));
 	} catch (const std::exception& e) {
 		throw std::runtime_error("Failed to store new client: " + std::string(e.what()));
 	}
 
 	logMsg("New client connected, FD: {%i}", clientFd);
-	
-	const std::string welcome = ":ircserv 001 client :Welcome to ft_irc\r\n";
-	ssize_t bytesSent = send(clientFd, welcome.c_str(), welcome.length(), 0);
-	if (bytesSent == -1) {
-		throw std::runtime_error("Failed to send welcome message to client");
-	}
-	
-	logMsg("Welcome message sent to client FD: {%i}", clientFd);
+
 }
 
-void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
+void Server::handleClientMessage(size_t clientIndex) {
 
-	char buffer[MAX_BUF]; // every client gets their own buffer size
-	int clientFd = fds[clientIndex].fd;
+	char buffer[MAX_BUF];
+	int clientFd = this->fds[clientIndex].fd;
 	std::memset(buffer, 0, MAX_BUF);
 	
 	ssize_t bytesRead = recv(clientFd, buffer, MAX_BUF, 0);
@@ -146,16 +162,17 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 			std::cerr << "Error reading from client fd " << clientFd << ": " << strerror(errno) << "\n";
 		}
 		close(clientFd);
-		fds.erase(fds.begin() + clientIndex);
+		this->fds.erase(this->fds.begin() + clientIndex);
 		connectedClients.erase(clientFd);
 	} else {
-		// Handle the received message here
 		logMsg("Received from client fd: {%i} : {%s}", clientFd, buffer);
 
-		// Process the message
-        Client *client = getClientOrReturn(clientFd);
-        if (!client)
-            return;
+		Client *client = GetClient(clientFd);
+
+		if (!client) {
+			logMsg("Client was not found or something");
+			return ;
+		}
 		client->setBuffer(buffer);
 		if (client->getBuffer().find_first_of("\r\n") == std::string::npos)
 			return ;
@@ -171,79 +188,100 @@ void Server::handleClientMessage(size_t clientIndex, std::vector<pollfd>& fds) {
 	}
 }
 
-bool Server::Signal = false;
-void Server::SignalHandler(int signum)
-{
-	(void)signum;
-	std::cout << std::endl << "Signal Received! \n";
-	Server::Signal = true;
-}
-
 void Server::run(int sFd) {
-	std::vector<pollfd> fds;
+	// fds is now a member of Server class
+	this->fds.clear();
 	
 	pollfd serverPoll;
 	serverPoll.fd = sFd;
 	serverPoll.events = POLLIN;
 	serverPoll.revents = 0;
-	fds.push_back(serverPoll);
+	this->fds.push_back(serverPoll);
 
-	signal(SIGINT, Server::SignalHandler);
-	signal(SIGQUIT, Server::SignalHandler);
-	signal(SIGPIPE, SIG_IGN); // or MSG_NOSIGNAL flag in send() to ignore SIGPIPE on linux systems
+	signal(SIGINT, Server::signalHandler);
+	signal(SIGQUIT, Server::signalHandler);
+	signal(SIGPIPE, SIG_IGN);
 
 	logMsg("Server started on port: {%i}", _port);
-	
-	while (Server::Signal == false) { // nuha's signal addition goes here as condition
 
-		int pollRet = poll(fds.data(), fds.size(), -1);
+	while (Server::_signalRecvd == false) {
+
+		int pollRet = poll(this->fds.data(), this->fds.size(), -1);
 		
-		if ( -1 == pollRet && Server::Signal == false ) {
+		if (pollRet == -1) {
+			if (errno == EINTR && Server::_signalRecvd) {
+				break;
+			}
 			throw (std::runtime_error("Poll failed: " + std::string(strerror(errno))));
 		}
 
-		for (size_t i = 0; i < fds.size(); ++i) {
-			if (fds[i].revents & POLLIN) {
-				if (fds[i].fd == sFd) {
-					handleNewConnection(sFd, fds);
+		for (size_t i = 0; i < this->fds.size(); ++i) {
+			if (this->fds[i].revents & POLLIN) {
+				if (this->fds[i].fd == sFd) {
+					handleNewConnection(sFd);
 				} else {
-					handleClientMessage(i, fds);
+					handleClientMessage(i);
+				}
+			}
+		
+			if (this->fds[i].revents & POLLOUT) {
+				if (this->fds[i].fd != sFd) {
+					handleClientWrite(i);
 				}
 			}
 		}
 	}
+	closeFds();
 }
 
-Server::Server( ) { this->sfds = -1; }
-Server::~Server( ) { }
-Server::Server( Server const &src ) { *this = src; }
-Server &Server::operator=( Server const &src ) {
-	if (this != &src) {
-		this->_port = src._port;
-		this->sfds = src.sfds;
-		this->_password = src._password;
-		this->channels = src.channels;
-		this->fds = src.fds;
-		this->connectedClients = src.connectedClients; // Copy the map
+void Server::handleClientWrite(size_t clientIndex) {
+	int clientFd = this->fds[clientIndex].fd;
+	Client* client = GetClient(clientFd);
+
+	if (!client || client->getOutgoingBuffer().empty()) {
+		this->fds[clientIndex].events &= ~POLLOUT;
+		return;
 	}
-	return (*this);
+
+	const std::string& outgoingData = client->getOutgoingBuffer();
+	ssize_t bytesSent = send(clientFd, outgoingData.c_str(), outgoingData.size(), 0);
+
+	if (bytesSent == -1) {
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+		
+			std::cerr << "Send buffer full for client fd " << clientFd << ". Will retry.\n";
+		} else {
+		
+			std::cerr << "Error sending to client fd " << clientFd << ": " << strerror(errno) << "\n";
+			RmChannels(clientFd);
+			RemoveClient(clientFd);
+			RemoveFds(clientFd);
+			close(clientFd);
+			this->fds.erase(this->fds.begin() + clientIndex);
+			connectedClients.erase(clientFd);
+		}
+	} else if (bytesSent > 0) {
+		client->clearOutgoingBuffer(bytesSent);
+		if (client->getOutgoingBuffer().empty()) {
+			this->fds[clientIndex].events &= ~POLLOUT;
+		}
+	}
 }
 
-/** getters */
 int Server::GetPort(){return this->_port;}
 int Server::GetFd(){return this->sfds;}
 Client *Server::GetClient(int fd){
-	std::map<int, Client>::iterator it = connectedClients.find(fd);
-	if (it != connectedClients.end()) {
-		return &(it->second);
+	for (size_t i = 0; i < this->clients.size(); i++){
+		if (this->clients[i].GetFd() == fd)
+			return &this->clients[i];
 	}
 	return NULL;
 }
 
 Client *Server::GetClientNick(std::string nickname){
-	for (std::map<int, Client>::iterator it = connectedClients.begin(); it != connectedClients.end(); ++it) {
-		if (it->second.GetNickName() == nickname)
-			return &(it->second);
+	for (size_t i = 0; i < this->clients.size(); i++){
+		if (this->clients[i].GetNickName() == nickname)
+			return &this->clients[i];
 	}
 	return NULL;
 }
@@ -257,19 +295,21 @@ Channel *Server::GetChannel(std::string name)
 	return NULL;
 }
 
-/** setters */
 void Server::SetFd( int fd ) { this->sfds = fd; }
 void Server::SetPort( int port ) { this->_port = port; }
 void Server::SetPassword( const std::string password ) { this->_password = password; }
 
 std::string Server::GetPassword(  ) { return this->_password; }
 
-// void Server::AddClient( Client newClient ) { /* No longer needed, clients added directly to map */ (void)newClient; } // Removed
+void Server::AddClient( Client newClient ) { this->clients.push_back( newClient); }
 void Server::AddChannel( Channel newChannel ) { this->channels.push_back( newChannel); }
 void Server::AddFds( pollfd newFd ) { this->fds.push_back(newFd); }
 
 void Server::RemoveClient(int fd){
-	connectedClients.erase(fd);
+	for (size_t i = 0; i < this->clients.size(); i++){
+		if (this->clients[i].GetFd() == fd)
+			{this->clients.erase(this->clients.begin() + i); return;}
+	}
 }
 void Server::RemoveChannel(std::string name){
 	for (size_t i = 0; i < this->channels.size(); i++){
@@ -294,8 +334,8 @@ void	Server::RmChannels(int fd){
 		if (channels[i].GetClientsNumber() == 0)
 			{channels.erase(channels.begin() + i); i--; continue;}
 		if (flag){
-			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@localhost QUIT Quit\r\n";
-			channels[i].sendTo_all(rpl);
+			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@" + this->serverName + " QUIT Quit\r\n";
+			channels[i].sendToAll(rpl);
 		}
 	}
 }
@@ -303,31 +343,39 @@ void	Server::RmChannels(int fd){
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << msg;
+	ss << ":" << this->serverName << " " << code << " " << clientname << msg;
 	std::string resp = ss.str();
-	if(send(fd, resp.c_str(), resp.size(),0) == -1)
-		std::cerr << "send() faild \n";
+	_sendResponse(resp, fd);
 }
 
 void Server::senderror(int code, std::string clientname, std::string channelname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << " " << channelname << msg;
+	ss <<  ":" << this->serverName << " " << code << " " << clientname << " " << channelname << msg;
 	std::string resp = ss.str();
-	if(send(fd, resp.c_str(), resp.size(),0) == -1)
-		std::cerr << "send() faild \n";
+	_sendResponse(resp, fd);
 }
 
 void Server::_sendResponse(std::string response, int fd)
 {
-	if(send(fd, response.c_str(), response.size(), 0) == -1)
-		std::cerr << "Response send() faild \n";
+	Client* client = GetClient(fd);
+	if (client) {
+		client->appendOutgoing(response);
+		for (size_t i = 0; i < this->fds.size(); ++i) {
+			if (this->fds[i].fd == fd) {
+				this->fds[i].events |= POLLOUT;
+				break ;
+			}
+		}
+	} else {
+		std::cerr << "Error: Client not found for fd " << fd << " when trying to send response.\n";
+	}
 }
 
 void Server::getCmd(std::string& cmd, int fd)
 {
 	if (cmd.empty())
-		return;
+		return ;
 
 	const size_t firstNonSpace = cmd.find_first_not_of(" \t\v");
 	if (firstNonSpace != std::string::npos)
@@ -339,161 +387,55 @@ void Server::getCmd(std::string& cmd, int fd)
 	}
 
 	std::string command = tokens[0];
-	for (size_t i = 0; i < command.length(); ++i) {
-		command[i] = static_cast<char>(std::tolower(command[i]));
-	}
 
-	if (command == "bong")
-		return ;
-    else if (command == "cap"){
-        std::cout << "Capability negotiation in progress" << std::endl;
-        _sendResponse("CAP * LS :", fd);
-    }
-	else if (command == "pass")
+	if (command == "PING") {
+		std::vector<std::string> parts = splitCmd(cmd);
+		Client* cli = GetClient(fd);
+
+		if (parts.size() < 2) {
+			std::string nick = cli ? cli->GetNickName() : "*";
+			_sendResponse(ERR_NOTENOUGHPARAM(nick), fd);
+		} else {
+			std::string arg = parts[1];
+			if (arg[0] == ':') arg = arg.substr(1);
+			std::string response = ":" + serverName + " PONG " + serverName + " :" + arg + "\r\n";
+			_sendResponse(response, fd);
+		}
+	}
+	else if (command == "CAP"){
+		if (tokens.size() == 1) 
+			return ;
+		if (tokens[1] == "LS")
+			_sendResponse("CAP * LS :\r\n", fd);
+		else if (tokens[1] == "REQ")
+			_sendResponse("CAP * ACK :\r\n", fd);
+	}
+	else if (command == "PASS")
 		client_authen(fd, cmd);
-	else if (command == "nick")
+	else if (command == "NICK")
 		set_nickname(cmd, fd);
-	else if (command == "user")
+	else if (command == "USER")
 		set_username(cmd, fd);
-	else if (command == "quit")
+	else if (command == "QUIT")
 		QUIT(cmd, fd);
-	else if (GetClient(fd)->getState() == REGISTERED) // Use new state
-	{
-		if (command == "kick")
+	else if (GetClient(fd)->getRegistered() && (!GetClient(fd)->GetNickName().empty() && !GetClient(fd)->GetUserName().empty())) {
+		if (command == "KICK")
 			KICK(cmd, fd);
-		else if (command == "join")
-			JOIN(cmd, fd);
-		else if (command == "topic")
+		else if (command == "JOIN")
+			JOIN(cmd, tokens, fd);
+		else if (command == "TOPIC")
 			Topic(cmd, fd);
-		else if (command == "mode")
+		else if (command == "MODE")
 			mode_command(cmd, fd);
-		else if (command == "part")
+		else if (command == "PART")
 			PART(cmd, fd);
-		else if (command == "privmsg")
+		else if (command == "PRIVMSG")
 			PRIVMSG(cmd, fd);
-		else if (command == "invite")
+		else if (command == "INVITE")
 			Invite(cmd, fd);
 		else
 			_sendResponse(ERR_CMDNOTFOUND(GetClient(fd)->GetNickName(), tokens[0]), fd);
-	}
-	else
-	{
+	} else {
 		_sendResponse(ERR_NOTREGISTERED("*"), fd);
 	}
-}
-
-int Server::SearchForClients(const std::string& nickname){
-	for (std::map<int, Client>::iterator it = connectedClients.begin(); it != connectedClients.end(); ++it) {
-		if (it->second.GetNickName() == nickname)
-			return it->first;
-	}
-	return -1;
-}
-
-void Server::client_authen(int fd, std::string pass)
-{
-	Client *client = getClientOrReturn(fd);
-	if (!client)
-		return;
-	
-	std::vector<std::string> tokens = splitCmd(pass);
-	if (tokens.size() < 2) {
-		_sendResponse(ERR_NEEDMOREPARAMS(client->GetNickName(), "PASS"), fd);
-		return;
-	}
-
-	if (client->getState() != UNAUTHENTICATED) { // Check if already authenticated or registered
-		_sendResponse(ERR_ALREADYREGISTERED(client->GetNickName()), fd);
-		return;
-	}
-
-	if (tokens[1] == _password) {
-		client->setState(AUTHENTICATED); // Set state to AUTHENTICATED
-		logMsg("Client FD: {%i} authenticated successfully.", fd);
-	} else {
-		_sendResponse(ERR_PASSWDMISMATCH(client->GetNickName()), fd);
-		logMsg("Client FD: {%i} authentication failed.", fd);
-	}
-}
-
-void Server::set_nickname(std::string cmd, int fd)
-{
-	Client *client = getClientOrReturn(fd);
-	if (!client)
-		return;
-
-	std::vector<std::string> tokens = splitCmd(cmd);
-	if (tokens.size() < 2) {
-		_sendResponse(ERR_NONICKNAMEGIVEN(client->GetNickName()), fd);
-		return;
-	}
-
-	std::string newNickname = tokens[1];
-	if (newNickname.empty() || newNickname.length() > 9 || !isValidNickname(newNickname)) {
-		_sendResponse(ERR_ERRONEUSNICKNAME(client->GetNickName(), newNickname), fd);
-		return;
-	}
-
-	if (nickNameInUse(newNickname)) {
-		_sendResponse(ERR_NICKNAMEINUSE(client->GetNickName(), newNickname), fd);
-		return;
-	}
-
-	client->SetNickname(newNickname);
-	logMsg("Client FD: {%i} nickname set to: {%s}", fd, newNickname.c_str());
-
-	if (!client->GetUserName().empty() && client->getState() == AUTHENTICATED) {
-		registerClient(client, fd);
-	}
-}
-
-void Server::set_username(std::string& username, int fd)
-{
-	Client *client = getClientOrReturn(fd);
-	if (!client)
-		return;
-
-	std::vector<std::string> tokens = splitCmd(username);
-	if (tokens.size() < 5) {
-		_sendResponse(ERR_NEEDMOREPARAMS(client->GetNickName(), "USER"), fd);
-		return;
-	}
-
-	std::string newUsername = tokens[1];
-	std::string realname = tokens[4]; // Assuming realname is the 5th token
-
-	if (newUsername.empty()) {
-		_sendResponse(ERR_NEEDMOREPARAMS(client->GetNickName(), "USER"), fd);
-		return;
-	}
-
-	if (client->getState() != UNAUTHENTICATED) { // Check if already authenticated or registered
-		_sendResponse(ERR_ALREADYREGISTERED(client->GetNickName()), fd);
-		return;
-	}
-
-	client->SetUsername(newUsername);
-	// client->SetRealname(realname); // Assuming a SetRealname method exists or add it
-	logMsg("Client FD: {%i} username set to: {%s}", fd, newUsername.c_str());
-
-	if (!client->GetNickName().empty() && client->getState() == AUTHENTICATED) {
-		registerClient(client, fd);
-	}
-}
-
-void Server::registerClient(Client *client, int fd) {
-	client->setState(REGISTERED);
-	_sendResponse(RPL_WELCOME(client->GetNickName(), client->GetUserName()), fd);
-	_sendResponse(RPL_YOURHOST(client->GetNickName()), fd);
-	_sendResponse(RPL_CREATED(client->GetNickName()), fd);
-	_sendResponse(RPL_MYINFO(client->GetNickName()), fd);
-}
-
-Client* Server::getClientOrReturn(int fd) {
-    Client *client = GetClient(fd);
-    if (!client) {
-        logMsg("Client was not found for fd: {%i}", fd);
-        return NULL;
-    }
-    return client;
 }

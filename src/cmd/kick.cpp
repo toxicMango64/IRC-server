@@ -19,7 +19,7 @@ void FindK(const std::string &cmd, const std::string &tofind, std::string &str)
     if (i < cmd.size()) {
         str = cmd.substr(i);
     }
-    for (i = 0; i < str.size() && str[i] == ' '; i++) { /** skips spaces */ }
+    for (i = 0; i < str.size() && str[i] == ' '; i++) { }
     str = str.substr(i);
 }
 
@@ -110,14 +110,14 @@ void Server::KICK(const std::string &cmd, int fd) {
                 if (targetClient != NULL) {
                     std::stringstream ss;
                     ss << ":" << GetClient(fd)->GetNickName() << "!~" << GetClient(fd)->GetUserName()
-                       << "@" << "localhost"
+                       << "@irc.dal.chawal"
                        << " KICK #" << tmp[i] << " " << user;
                     if (!reason.empty()) {
                         ss << " :" << reason << "\r\n";
                     } else {
                         ss << "\r\n";
                     }
-                    ch->sendTo_all(ss.str());
+                    ch->sendToAll(ss.str());
                     if (ch->get_admin(targetClient->GetFd()) != NULL) {
                         ch->remove_admin(targetClient->GetFd());
                     } else {
