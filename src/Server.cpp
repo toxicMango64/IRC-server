@@ -60,9 +60,12 @@ void Server::closeFds() {
 	struct linger linger_opt = { .l_onoff = 1, .l_linger = 0 };
 
 	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
-		setsockopt(it->GetFd(), SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
-		std::cout << "Client <" << it->GetFd() << "> Disconnected \n";
-		close(it->GetFd());
+		int fd = it->GetFd();
+		if (fcntl(fd, F_GETFL, 0) != -1) {
+			setsockopt(fd, SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
+			std::cout << "Client <" << fd << "> Disconnected \n";
+			close(fd);
+		}
 	}
 
 	clients.clear();
@@ -153,6 +156,9 @@ void Server::handleClientMessage(size_t clientIndex) {
 		} else {
 			std::cerr << "Error reading from client fd " << clientFd << ": " << strerror(errno) << "\n";
 		}
+		RmChannels(clientFd);
+		RemoveClient(clientFd);
+		RemoveFds(clientFd);
 		close(clientFd);
 		this->fds.erase(this->fds.begin() + clientIndex);
 	} else {
@@ -207,6 +213,8 @@ void Server::run(int sFd) {
 		}
 
 		for (size_t i = 0; i < this->fds.size(); ++i) {
+			if (this->fds[i].fd == -1)
+				continue;
 			if (this->fds[i].revents & POLLIN) {
 				if (this->fds[i].fd == sFd) {
 					handleNewConnection(sFd);
@@ -235,6 +243,7 @@ void Server::handleClientWrite(size_t clientIndex) {
 	}
 
 	const std::string& outgoingData = client->getOutgoingBuffer();
+	logMsg("Attempting to send %zu bytes to client fd %d", outgoingData.size(), clientFd);
 	ssize_t bytesSent = send(clientFd, outgoingData.c_str(), outgoingData.size(), 0);
 
 	if (bytesSent == -1) {
@@ -243,7 +252,7 @@ void Server::handleClientWrite(size_t clientIndex) {
 			std::cerr << "Send buffer full for client fd " << clientFd << ". Will retry.\n";
 		} else {
 		
-			std::cerr << "Error sending to client fd " << clientFd << ": " << strerror(errno) << "\n";
+			std::cerr << "Error sending to client fd " << clientFd << ": " << strerror(errno) << " (errno: " << errno << ")\n";
 			RmChannels(clientFd);
 			RemoveClient(clientFd);
 			RemoveFds(clientFd);
@@ -310,7 +319,7 @@ void Server::RemoveChannel(std::string name){
 void Server::RemoveFds(int fd){
 	for (size_t i = 0; i < this->fds.size(); i++){
 		if (this->fds[i].fd == fd)
-			{this->fds.erase(this->fds.begin() + i); return;}
+			{this->fds[i].fd = -1; return;}
 	}
 }
 
@@ -323,8 +332,9 @@ void	Server::RmChannels(int fd){
 			{channels[i].remove_admin(fd); flag = 1;}
 		if (channels[i].GetClientsNumber() == 0)
 			{channels.erase(channels.begin() + i); i--; continue;}
-		if (flag){
-			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@" + this->serverName + " QUIT Quit\r\n";
+		Client* client = GetClient(fd);
+		if (client) {
+			std::string rpl = ":" + client->GetNickName() + "!~" + client->GetUserName() + "@" + this->serverName + " QUIT Quit\r\n";
 			channels[i].sendToAll(rpl);
 		}
 	}

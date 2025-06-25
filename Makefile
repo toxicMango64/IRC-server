@@ -1,5 +1,5 @@
 NAME 	=	ircserv
-CXX 		=	c++
+CXX 	=	c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INC)
 SRCDIR	:= src/
 CMDDIR	:= ${SRCDIR}cmd/

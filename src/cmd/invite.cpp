@@ -7,7 +7,12 @@ void Server::Invite( std::string &cmd, int &fd )
         senderror(461, GetClient(fd)->GetNickName(), fd, " :Not enough parameters\r\n");
         return ;
     }
-    std::string channelname = scmd[2].substr(1);///////////////////////////////////////////////////////////this got changed after yumna's evaluation
+    // std::string channelname = scmd[2].substr(1); ///////////////////////////////////////////////////////////this got changed after yumna's evaluation
+    // if(scmd[2][0] != '#' || GetChannel(channelname) == NULL) {
+    //     senderror(403, channelname, fd, " :No such channel\r\n");
+    //     return ;
+    // }
+    std::string channelname = scmd[2].substr(1); ///////////////////////////////////////////////////////////this got changed after yumna's evaluation
     if(scmd[2][0] != '#' || GetChannel(channelname) == NULL) {
         senderror(403, channelname, fd, " :No such channel\r\n");
         return ;
@@ -34,8 +39,13 @@ void Server::Invite( std::string &cmd, int &fd )
         return ;
     }
 
-    if (GetChannel(channelname)->GetLimit() != 0 && GetChannel(channelname)->GetClientsNumber() >= GetChannel(channelname)->GetLimit()) {
-        senderror(473, GetChannel(channelname)->get_client(fd)->GetNickName(), channelname, fd, " :Cannot invite to channel (+i)\r\n");
+    int clientNumber = GetChannel(channelname)->GetClientsNumber();
+    if (clientNumber == -1) {
+        senderror(473, GetClient(fd)->GetNickName(), channelname, fd, " :Cannot invite to channel\r\n");
+        return ;
+    }
+    if (GetChannel(channelname)->GetLimit() != 0 && clientNumber >= GetChannel(channelname)->GetLimit()) {
+        senderror(473, GetClient(fd)->GetNickName(), channelname, fd, " :Cannot invite to channel\r\n");
         return ;
     }
 

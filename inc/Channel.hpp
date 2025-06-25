@@ -23,6 +23,7 @@ private:
 	std::vector<Client>	clients;
 	std::vector<Client>	admins;
 	std::vector<std::pair<char, bool> >	modes;
+	bool clientListBeingModified;
 
 public:
 	Channel( );

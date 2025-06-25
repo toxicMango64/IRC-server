@@ -15,6 +15,7 @@ Channel::Channel( ) {
 	for(int i = 0; i < 5; i++)
 		modes.push_back(std::make_pair(charaters[i],false));
 	this->created_at = "";
+	this->clientListBeingModified = false;
 }
 
 Channel::~Channel( ){ }
@@ -58,7 +59,11 @@ int Channel::GetInvitOnly(){return this->inviteOnly;}
 int Channel::GetTopic(){return this->topic;}
 int Channel::GetKey(){return this->keyEnabled;}
 int Channel::GetLimit(){return this->limit;}
-int Channel::GetClientsNumber(){return this->clients.size() + this->admins.size();}
+int Channel::GetClientsNumber(){
+	if (clientListBeingModified)
+		return -1;
+	return this->clients.size() + this->admins.size();
+}
 bool Channel::Gettopic_restriction() const{return this->topicRestricted;}
 bool Channel::getModeAtindex(size_t index){return modes[index].second;}
 bool Channel::clientInChannel(std::string &nick){
@@ -137,22 +142,34 @@ Client* Channel::GetClientInChannel(std::string name)
 	return NULL;
 }
 
-void Channel::add_client(Client newClient){clients.push_back(newClient);}
-void Channel::add_admin(Client newClient){admins.push_back(newClient);}
+void Channel::add_client(Client newClient){
+	clientListBeingModified = true;
+	clients.push_back(newClient);
+	clientListBeingModified = false;
+}
+void Channel::add_admin(Client newClient){
+	clientListBeingModified = true;
+	admins.push_back(newClient);
+	clientListBeingModified = false;
+}
 void Channel::remove_client(int fd){
+	clientListBeingModified = true;
 	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it){
 		if (it->GetFd() == fd) {
 			clients.erase(it);
 			break;
 		}
 	}
+	clientListBeingModified = false;
 }
 
 void Channel::remove_admin(int fd){
+	clientListBeingModified = true;
 	for (std::vector<Client>::iterator it = admins.begin(); it != admins.end(); ++it){
 		if (it->GetFd() == fd)
 			{admins.erase(it); break;}
 	}
+	clientListBeingModified = false;
 }
 
 bool Channel::change_clientToAdmin(std::string& nick){
