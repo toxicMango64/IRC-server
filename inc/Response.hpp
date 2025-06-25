@@ -62,12 +62,12 @@ inline std::string RPL_CHANGEMODE(const std::string& hostname, const std::string
            std::string(mode) + " " + std::string(arguments) + CRLF; 
 }
 
-inline std::string RPL_NICKCHANGE(const std::string& oldnickname, const std::string& newnickname) {
-    return ":" + std::string(oldnickname) + " NICK " + std::string(newnickname) + CRLF;
+inline std::string RPL_NICKCHANGE(const std::string& hostname, const std::string& newnickname) {
+    return ":" + std::string(hostname) + " NICK :" + std::string(newnickname) + CRLF;
 }
 
-inline std::string RPL_JOINMSG(const std::string& hostname, const std::string& ipaddress, const std::string& channelname) {
-    return ":" + std::string(hostname) + "@" + std::string(ipaddress) + " JOIN #" + std::string(channelname) + CRLF;
+inline std::string RPL_JOINMSG(const std::string& hostname, const std::string& channelname) {
+    return ":" + std::string(hostname) + " JOIN #" + std::string(channelname) + CRLF;
 }
 
 inline std::string RPL_NAMREPLY(const std::string& nickname, const std::string& channelname, const std::string& clientslist) {
@@ -83,11 +83,11 @@ inline std::string RPL_TOPICIS(const std::string& nickname, const std::string& c
 }
 
 inline std::string ERR_NEEDMODEPARM(const std::string& channelname, const std::string& mode) {
-    return ": 696 #" + std::string(channelname) + " * You must specify a parameter for the mode " + std::string(mode) + "." + CRLF;
+    return ":" + dalchawal + " 696 #" + std::string(channelname) + " * You must specify a parameter for the mode " + std::string(mode) + "." + CRLF;
 }
 
 inline std::string ERR_INVALIDMODEPARM(const std::string& channelname, const std::string& mode) {
-    return ": 696 #" + std::string(channelname) + " Invalid mode parameter: " + std::string(mode) + CRLF;
+    return ":" + dalchawal + " 696 #" + std::string(channelname) + " Invalid mode parameter: " + std::string(mode) + CRLF;
 }
 
 inline std::string ERR_KEYSET(const std::string& channelname) {

@@ -51,7 +51,7 @@ void Server::mode_command(std::string& cmd, int fd)
 
     Client* cli = GetClient(fd);
 
-    size_t found = cmd.find_first_not_of("MODEmode \t\v");
+    size_t found = cmd.find_first_not_of("MODE \t\v");
     if (found != std::string::npos)
         cmd = cmd.substr(found);
     else {
@@ -62,6 +62,7 @@ void Server::mode_command(std::string& cmd, int fd)
     getCmdArgs(cmd, channelName, modeset, params);
     std::vector<std::string> tokens = splitParams(params);
 
+    std::cerr << channelName << std::endl;
     if (channelName.empty() || channelName[0] != '#' || !(channel = GetChannel(channelName.substr(1)))) {
         _sendResponse(ERR_CHANNELNOTFOUND(cli->GetUserName(), channelName), fd);
         return;

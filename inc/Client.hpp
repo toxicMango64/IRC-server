@@ -32,6 +32,7 @@ class Client {
 		std::string		GetUserName();
 		std::string		getIpAdd();
 		std::string		getBuffer();
+		std::string		getHostname( const std::string& oldNick );
 		std::string		getHostname();
 		std::string&	getOutgoingBuffer(); // New method
 		

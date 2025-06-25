@@ -332,9 +332,8 @@ void	Server::RmChannels(int fd){
 			{channels[i].remove_admin(fd); flag = 1;}
 		if (channels[i].GetClientsNumber() == 0)
 			{channels.erase(channels.begin() + i); i--; continue;}
-		Client* client = GetClient(fd);
-		if (client) {
-			std::string rpl = ":" + client->GetNickName() + "!~" + client->GetUserName() + "@" + this->serverName + " QUIT Quit\r\n";
+		if (flag){
+			std::string rpl = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@" + this->serverName + " QUIT :Client exited\r\n";
 			channels[i].sendToAll(rpl);
 		}
 	}

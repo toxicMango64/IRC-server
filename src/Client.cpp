@@ -52,10 +52,15 @@ bool Client::GetLogedIn( ) { return this->logedin; }
 std::string Client::GetUserName( ) { return this->username; }
 std::string Client::getBuffer( ) { return buffer; }
 std::string Client::getIpAdd( ) { return ipadd; }
+std::string Client::getHostname(const std::string& oldNick) {
+	std::string hostname = oldNick + "!~" + this->GetUserName() + "@" + "irc.dal.chawal";
+	return hostname;
+}
 std::string Client::getHostname( ) {
 	std::string hostname = this->GetNickName() + "!~" + this->GetUserName() + "@" + "irc.dal.chawal";
 	return hostname;
 }
+
 
 std::string& Client::getOutgoingBuffer() {
     return _outgoingBuffer;

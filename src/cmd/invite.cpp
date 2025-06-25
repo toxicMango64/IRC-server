@@ -14,7 +14,7 @@ void Server::Invite( std::string &cmd, int &fd )
     // }
     std::string channelname = scmd[2].substr(1); ///////////////////////////////////////////////////////////this got changed after yumna's evaluation
     if(scmd[2][0] != '#' || GetChannel(channelname) == NULL) {
-        senderror(403, channelname, fd, " :No such channel\r\n");
+        senderror(403, scmd[2], fd, " :No such channel\r\n");
         return ;
     }
 
@@ -24,7 +24,7 @@ void Server::Invite( std::string &cmd, int &fd )
     }
 
     if (GetChannel(channelname)->GetClientInChannel(scmd[1]) != NULL) {
-        senderror(443, GetClient(fd)->GetNickName(), channelname, fd, " :is already on channel\r\n");
+        senderror(443, GetClient(fd)->GetNickName(), scmd[2], fd, " :is already on channel\r\n");
         return ;
     }
 
@@ -50,7 +50,7 @@ void Server::Invite( std::string &cmd, int &fd )
     }
 
     clt->AddChannelInvite(channelname);
-    const std::string rep1 = ": 341 "+ GetClient(fd)->GetNickName()+" "+ clt->GetNickName()+" "+ scmd[2]+"\r\n";
+    const std::string rep1 = ":" + serverName + " 341 "+ GetClient(fd)->GetNickName()+" "+ clt->GetNickName()+" "+ scmd[2]+"\r\n";
     _sendResponse(rep1, fd);
     const std::string rep2 = ":"+ clt->getHostname() + " INVITE " + clt->GetNickName() + " " + scmd[2]+"\r\n";
     _sendResponse(rep2, clt->GetFd());

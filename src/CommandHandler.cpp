@@ -118,27 +118,25 @@ void Server::set_nickname(std::string cmd, int fd) {
 				if (oldnick == "*" && !cli->GetUserName().empty()) {
 					cli->setLogedin(true);
 					_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
-					_sendResponse(RPL_NICKCHANGE(cli->GetNickName(),cmd), fd);
 					_sendResponse(RPL_YOURHOST(cli->GetNickName()), fd);
 					_sendResponse(RPL_CREATED(cli->GetNickName()), fd);
 					_sendResponse(RPL_MYINFO(cli->GetNickName()), fd);
 					_sendResponse(RPL_ISUPPORT(cli->GetNickName()), fd);
 				}
 				else {
-					_sendResponse(RPL_NICKCHANGE(oldnick,cmd), fd);
+					_sendResponse(RPL_NICKCHANGE(cli->getHostname(oldnick), cmd), fd);
 				}
 				return ;
 			}
 			
 		}
 		else if (cli && !cli->getRegistered()) {
-			_sendResponse(ERR_NOTREGISTERED(cmd), fd);
+			_sendResponse(ERR_NOTREGISTERED("*"), fd);
 		}
 	}
 	if(cli && cli->getRegistered() && !cli->GetUserName().empty() && !cli->GetNickName().empty() && cli->GetNickName() != "*" && !cli->GetLogedIn()) {
 		cli->setLogedin(true);
 		_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
-		_sendResponse(RPL_NICKCHANGE(cli->GetNickName(),cmd), fd);
 		_sendResponse(RPL_YOURHOST(cli->GetNickName()), fd);
 		_sendResponse(RPL_CREATED(cli->GetNickName()), fd);
 		_sendResponse(RPL_MYINFO(cli->GetNickName()), fd);
@@ -169,7 +167,6 @@ void	Server::set_username(std::string& cmd, int fd)
 	{
 		cli->setLogedin(true);
 		_sendResponse(RPL_CONNECTED(cli->GetNickName()), fd);
-		_sendResponse(RPL_NICKCHANGE(cli->GetNickName(),cmd), fd);
 		_sendResponse(RPL_YOURHOST(cli->GetNickName()), fd);
 		_sendResponse(RPL_CREATED(cli->GetNickName()), fd);
 		_sendResponse(RPL_MYINFO(cli->GetNickName()), fd);

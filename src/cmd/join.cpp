@@ -127,17 +127,17 @@ void Server::ExistCh(std::vector<std::pair<std::string, std::string> >& token, s
     this->channels[j].add_client(*cli);
 
     if (channels[j].GetTopicName().empty()) {
-        _sendResponse(RPL_JOINMSG(GetClient(fd)->getHostname(), GetClient(fd)->getIpAdd(), token[i].first) +
+        _sendResponse(RPL_JOINMSG(GetClient(fd)->getHostname(), token[i].first) +
                       RPL_NAMREPLY(GetClient(fd)->GetNickName(), channels[j].GetName(), channels[j].clientChannel_list()) +
                       RPL_ENDOFNAMES(GetClient(fd)->GetNickName(), channels[j].GetName()), fd);
     } else {
-        _sendResponse(RPL_JOINMSG(GetClient(fd)->getHostname(), GetClient(fd)->getIpAdd(), token[i].first) +
+        _sendResponse(RPL_JOINMSG(GetClient(fd)->getHostname(), token[i].first) +
                       RPL_TOPICIS(GetClient(fd)->GetNickName(), channels[j].GetName(), channels[j].GetTopicName()) +
                       RPL_NAMREPLY(GetClient(fd)->GetNickName(), channels[j].GetName(), channels[j].clientChannel_list()) +
                       RPL_ENDOFNAMES(GetClient(fd)->GetNickName(), channels[j].GetName()), fd);
     }
 
-    channels[j].sendToAllExcept(RPL_JOINMSG(GetClient(fd)->getHostname(), GetClient(fd)->getIpAdd(), token[i].first), fd);
+    channels[j].sendToAllExcept(RPL_JOINMSG(GetClient(fd)->getHostname(), token[i].first), fd);
 }
 
 void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >& token, size_t i, int fd)
@@ -157,7 +157,7 @@ void Server::NotExistCh(std::vector<std::pair<std::string, std::string> >& token
     newChannel.set_createiontime();
     this->channels.push_back(newChannel);
 
-    _sendResponse(RPL_JOINMSG(GetClient(fd)->getHostname(), GetClient(fd)->getIpAdd(), newChannel.GetName()) +
+    _sendResponse(RPL_JOINMSG(GetClient(fd)->getHostname(), newChannel.GetName()) +
                   RPL_NAMREPLY(GetClient(fd)->GetNickName(), newChannel.GetName(), newChannel.clientChannel_list()) +
                   RPL_ENDOFNAMES(GetClient(fd)->GetNickName(), newChannel.GetName()), fd);
 }
