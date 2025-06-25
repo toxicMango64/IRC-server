@@ -48,7 +48,6 @@ private:
 	static bool _signalRecvd;
 
 	int							sfds;
-	std::map<int, Client>		connectedClients;
 	std::vector<Client>			clients;
 	std::vector<Channel>		channels;
 	std::vector<struct pollfd>	fds;

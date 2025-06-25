@@ -5,21 +5,18 @@
 #include <vector>
 #include <iostream>
 
-enum ClientState {
-    UNAUTHENTICATED,
-    AUTHENTICATED,
-    REGISTERED,
-};
+#ifndef MAX_BUF
+# define MAX_BUF 512
+#endif
 
 class Client {
 	public:
 		Client();
 		Client( int fd );
-		Client(std::string nickname, std::string username, int fd);
-		~Client();
-
+		Client( const std::string& nickname, const std::string& username, int fd );
 		Client(Client const &src);
 		Client &operator=(Client const &src);
+		~Client();
 
 		void	clearBuffer();
 		void	AddChannelInvite(std::string &chname);
@@ -55,17 +52,13 @@ class Client {
 		std::string             nickname;
 		std::string             realname;
 		std::string             username;
-		ClientState             state;
 		std::set<std::string>   channels;
 		bool                    isOperator;
 		bool 					registered;
 		std::string				ipadd;
 		bool					logedin;
 		// std::string				buffer;
-		static const int		MAX_BUF = 512;
 		static char	buffer[MAX_BUF]	__attribute__((aligned(16)));
 		std::string				_outgoingBuffer; // Buffer for data to be sent
-		
 		std::vector<std::string>	ChannelsInvite;
-
 };

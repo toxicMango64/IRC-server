@@ -132,11 +132,11 @@ void Server::PRIVMSG(const std::string& cmd, int fd)
     for (size_t i = 0; i < tmp.size(); i++) {
         if (!tmp[i].empty() && tmp[i][0] == '#') {
             tmp[i].erase(tmp[i].begin());
-            const std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@irc.dal.chawal PRIVMSG #" + tmp[i] + " :" + cmd + "\r\n";
+            const std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@" + serverName + " PRIVMSG #" + tmp[i] + " :" + cmd + "\r\n";
             GetChannel(tmp[i])->sendToAllExcept(resp, fd);
         }
         else {
-            const std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@irc.dal.chawal PRIVMSG " + tmp[i] + " :" + message + "\r\n";
+            const std::string resp = ":" + GetClient(fd)->GetNickName() + "!~" + GetClient(fd)->GetUserName() + "@" + serverName + " PRIVMSG " + tmp[i] + " :" + message + "\r\n";
             _sendResponse(resp, GetClientNick(tmp[i])->GetFd());
         }
     }

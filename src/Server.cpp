@@ -17,7 +17,6 @@ Server &Server::operator=( Server const &src ) {
 		this->clients = src.clients;
 		this->channels = src.channels;
 		this->fds = src.fds;
-		this->connectedClients = src.connectedClients;
 	}
 	return (*this);
 }
@@ -66,12 +65,7 @@ void Server::closeFds() {
 		close(it->GetFd());
 	}
 
-	for (std::map<int, Client>::iterator it = connectedClients.begin(); it != connectedClients.end(); ++it) {
-		std::cout << "Client <" << it->first << "> Disconnected \n";
-		close(it->first);
-	}
-
-	connectedClients.clear();
+	clients.clear();
 
 	if (this->sfds != -1) {
 		std::cout << "Server <" << this->sfds << "> Disconnected \n";
@@ -135,7 +129,6 @@ void Server::handleNewConnection(int sFd) {
 	this->fds.push_back(clientPoll);
 
 	try {
-		connectedClients.insert(std::make_pair(clientFd, Client(clientFd)));
 		AddClient(Client(clientFd));
 	} catch (const std::exception& e) {
 		throw std::runtime_error("Failed to store new client: " + std::string(e.what()));
@@ -146,7 +139,6 @@ void Server::handleNewConnection(int sFd) {
 }
 
 void Server::handleClientMessage(size_t clientIndex) {
-
 	char buffer[MAX_BUF];
 	int clientFd = this->fds[clientIndex].fd;
 	std::memset(buffer, 0, MAX_BUF);
@@ -163,14 +155,13 @@ void Server::handleClientMessage(size_t clientIndex) {
 		}
 		close(clientFd);
 		this->fds.erase(this->fds.begin() + clientIndex);
-		connectedClients.erase(clientFd);
 	} else {
 		logMsg("Received from client fd: {%i} : {%s}", clientFd, buffer);
 
 		Client *client = GetClient(clientFd);
 
 		if (!client) {
-			logMsg("Client was not found or something");
+			logMsg("Client was not found");
 			return ;
 		}
 		client->setBuffer(buffer);
@@ -258,7 +249,6 @@ void Server::handleClientWrite(size_t clientIndex) {
 			RemoveFds(clientFd);
 			close(clientFd);
 			this->fds.erase(this->fds.begin() + clientIndex);
-			connectedClients.erase(clientFd);
 		}
 	} else if (bytesSent > 0) {
 		client->clearOutgoingBuffer(bytesSent);

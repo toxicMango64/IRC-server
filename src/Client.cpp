@@ -1,30 +1,27 @@
 #include "../inc/Client.hpp"
 #include "../inc/Server.hpp"
 
+char Client::buffer[MAX_BUF];
+
 Client::Client(int fd): fd(fd) {
 	this->nickname = "";
 	this->username = "";
 	this->isOperator= false;
 	this->registered = false;
-	this->buffer = "";
+	std::memset(this->buffer, 0, MAX_BUF);
 	this->ipadd = "";
 	this->logedin = false;
 }
-
-Client::Client() {
-	this->nickname = "";
-	this->username = "";
-	this->fd = -1;
-	this->isOperator= false;
-	this->registered = false;
-	this->buffer = "";
-	this->ipadd = "";
-	this->logedin = false;
+Client::Client(void) {
+	*this = Client(-1);
 }
-
-Client::Client(std::string nickname, std::string username, int fd) :fd(fd), nickname(nickname), username(username) { }
-Client::~Client( ) { }
-Client::Client( Client const &src ) { *this = src; }
+Client::Client(const std::string& nickname, const std::string& username, int fd) {
+	*this = Client(fd);
+	this->username = username;
+	this->nickname = nickname;
+}
+Client::~Client(void) { }
+Client::Client(Client const &src) { *this = src; }
 
 Client &Client::operator=(Client const &src){
 	if (this != &src){
@@ -32,7 +29,7 @@ Client &Client::operator=(Client const &src){
 		this->username = src.username;
 		this->fd = src.fd;
 		this->ChannelsInvite = src.ChannelsInvite;
-		this->buffer = src.buffer;
+		std::copy(src.buffer, src.buffer + MAX_BUF, this->buffer);
 		this->registered = src.registered;
 		this->ipadd = src.ipadd;
 		this->logedin = src.logedin;
@@ -72,12 +69,12 @@ void Client::SetUsername(std::string& username){this->username = username; }
 void Client::setBuffer(std::string recived) {
 	// recived.erase(std::remove(recived.begin(), recived.end(), '\x04'), recived.end());
     // if (buffer.length() + recived.length() > Server::MAX_BUF * 4) { 
-    if (buffer.length() + recived.length() > MAX_BUF * 4) { 
-        buffer.clear();
-        std::cerr << "Client buffer overflow prevented. Disconnecting client (FD: " << fd << ").\n";
-        return ;
-    }
-    buffer += recived;
+	if (strlen(buffer) + recived.length() > MAX_BUF * 4) { 
+		buffer[0] = '\0';
+		std::cerr << "Client buffer overflow prevented. Disconnecting client (FD: " << fd << ").\n";
+		return ;
+	}
+	strncat(buffer, recived.c_str(), sizeof(buffer) - strlen(buffer) - 1);
 }
 
 void Client::setRegistered(bool value){registered = value; }
@@ -95,7 +92,7 @@ void Client::clearOutgoingBuffer(size_t bytesSent) {
     }
 }
 
-void Client::clearBuffer() { buffer.clear(); }
+void Client::clearBuffer() { buffer[0] = '\0'; }
 void Client::AddChannelInvite( std::string &chname ) {
 	ChannelsInvite.push_back( chname );
 }
