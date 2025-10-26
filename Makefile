@@ -41,7 +41,8 @@ DEBUGFLAGS	:=
 # ------------------------------- Variables ---------------------------------- #
 
 RM     := rm -fr
-OBS    := $(NAME).dSYM .DS_Store .vscode output.log
+OBS    := $(NAME).dSYM .DS_Store .vscode output.log $(NAME).profdata $(NAME).profraw coverage \
+	  coverage.txt coverage.info out
 
 SHIFT  = $(eval O=$(shell echo $$((($(O)%15)+1))))
 
@@ -81,11 +82,11 @@ SANITIZED_EXISTS := $(shell [ -f $(SANITIZED_FLAG) ] && echo 1)
 
 PHONY	:= all
 ifeq ($(MODE), debug)
-    DEBUGFLAGS += -g3 $(SANITIZE)
+    DEBUGFLAGS += -fprofile-instr-generate -fcoverage-mapping -g3 $(SANITIZE)
     ifeq ($(SANITIZED_EXISTS), 1)
-        all: buildinfo $(NAME) info
+        all: info buildinfo $(NAME)
     else
-        all: createSANITIZED clean buildinfo $(NAME) info
+        all: info createSANITIZED fclean buildinfo $(NAME)
     endif
 else
     ifeq ($(SANITIZED_EXISTS), 1)
@@ -141,6 +142,23 @@ fclean: clean removeSANITIZED ## uses the rule clean and removes the obsolete fi
 
 PHONY	+= re
 re: fclean all ## does fclean and all
+
+.PHONY: debugrun coverage clean
+
+# Optional arguments passed like: make debugrun ARGS="--port 8080 --verbose"
+ARGS ?=
+
+debugrun: ## Run the program with LLVM coverage instrumentation
+	@echo "Running with coverage instrumentation..."
+	LLVM_PROFILE_FILE="$(NAME).profraw" ./$(NAME) $(ARGS)
+
+coverage: ## Merge and generate coverage reports
+	@echo "Generating coverage reports..."
+	@llvm-profdata merge -sparse $(NAME).profraw -o $(NAME).profdata
+	@llvm-cov report ./$(NAME) -instr-profile=$(NAME).profdata
+	@llvm-cov show ./$(NAME) -instr-profile=$(NAME).profdata -format=html -output-dir=coverage
+	@echo "HTML report available in ./coverage/index.html"
+
 
 TIDY_FLAGS =	'clang-analyzer-*,\
 				bugprone-*,\
