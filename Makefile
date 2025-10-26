@@ -89,7 +89,7 @@ endif
 
 debug-build:
 	@if [ -f "$(SANITIZED_FLAG)" ]; then \
-		$(MAKE) -sanitized info buildinfo $(NAME); \
+		$(MAKE) sanitized info buildinfo $(NAME); \
 	else \
 		$(MAKE) info createSANITIZED fclean buildinfo $(NAME); \
 	fi
