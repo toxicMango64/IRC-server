@@ -35,7 +35,7 @@ CXXFLAGS	+= -Wall -Wextra -Werror -I$(INC)
 STDFLAG		:= -std=c++98
 SANITIZE	:= -fsanitize=address
 LDFLAGS		:=
-CFLAGS		:= # -stdlib=libstdc++ # -fno-rtti
+CFLAGS		:= # -stdlib=libstdc++ -fno-rtti
 DEBUGFLAGS	:=
 
 # ------------------------------- Variables ---------------------------------- #
@@ -50,8 +50,6 @@ SHIFT  = $(eval O=$(shell echo $$((($(O)%15)+1))))
 
 UNAME := $(shell uname -s)
 NUMPROC :=
-CXX :=
-
 CXX := $(firstword $(foreach v,$(shell seq 21 -1 15),$(if $(shell command -v clang++-$(v)),clang++-$(v))))
 
 # CPU core detection
@@ -77,24 +75,50 @@ COMPILER_VERSION := $(shell $(CXX) --version | head -n 1)
 
 # ------------------------------ Build Mode Logic ---------------------------- #
 
-MODE ?=
-SANITIZED_EXISTS := $(shell [ -f $(SANITIZED_FLAG) ] && echo 1)
+MODE ?= release
+SANITIZED_FLAG ?= .sanitized
 
-PHONY	:= all
+PHONY	+= all debug-build release-build
+
+all:
 ifeq ($(MODE), debug)
-    DEBUGFLAGS += -fprofile-instr-generate -fcoverage-mapping -g3 $(SANITIZE)
-    ifeq ($(SANITIZED_EXISTS), 1)
-        all: info buildinfo $(NAME)
-    else
-        all: info createSANITIZED fclean buildinfo $(NAME)
-    endif
+	$(MAKE) debug-build
 else
-    ifeq ($(SANITIZED_EXISTS), 1)
-        all: removeSANITIZED clean $(NAME) banner
-    else
-        all: $(NAME) banner
-    endif
+	$(MAKE) release-build
 endif
+
+debug-build:
+	@if [ -f "$(SANITIZED_FLAG)" ]; then \
+		$(MAKE) -sanitized info buildinfo $(NAME); \
+	else \
+		$(MAKE) info createSANITIZED fclean buildinfo $(NAME); \
+	fi
+
+release-build:
+	@if [ -f "$(SANITIZED_FLAG)" ]; then \
+		$(MAKE) removeSANITIZED clean $(NAME) banner; \
+	else \
+		$(MAKE) $(NAME) banner; \
+	fi
+
+# MODE ?=
+# SANITIZED_EXISTS := $(shell [ -f $(SANITIZED_FLAG) ] && echo 1)
+
+# PHONY	:= all
+# ifeq ($(MODE), debug)
+#     DEBUGFLAGS += -fprofile-instr-generate -fcoverage-mapping -g3 $(SANITIZE)
+#     ifeq ($(SANITIZED_EXISTS), 1)
+#         all: info buildinfo $(NAME)
+#     else
+#         all: info createSANITIZED fclean buildinfo $(NAME)
+#     endif
+# else
+#     ifeq ($(SANITIZED_EXISTS), 1)
+#         all: removeSANITIZED clean $(NAME) banner
+#     else
+#         all: $(NAME) banner
+#     endif
+# endif
 
 PHONY	+= build
 build:
@@ -143,7 +167,7 @@ fclean: clean removeSANITIZED ## uses the rule clean and removes the obsolete fi
 PHONY	+= re
 re: fclean all ## does fclean and all
 
-.PHONY: debugrun coverage clean
+PHONY	+=  debugrun coverage clean
 
 # Optional arguments passed like: make debugrun ARGS="--port 8080 --verbose"
 ARGS ?=
